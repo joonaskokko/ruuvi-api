@@ -13,13 +13,13 @@ export async function getTags(): Promise<Tag[]> {
 }
 
 export async function getTagById(id: number): Promise<Tag> {
-	const tag: object = await db('tag').where({ id }).first();
+	const tag: object = await db('tag').where(id).first();
 	
 	return tag;
 }
 
 export async function getTagByRuuviId(ruuvi_id: string): Promise<Tag> {
-	const tag: object = await db('tag').where({ ruuvi_id }).first();
+	const tag: object = await db('tag').where(ruuvi_id).first();
 	
 	return tag;
 }
