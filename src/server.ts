@@ -37,13 +37,13 @@ app.post('/history', async (req, res, next) => {
 				else if (!tags || typeof tags !== 'object') {
 					return res.status(400).json({ error: 'Invalid ruuvi-gateway payload' });
 				}
-
-				historyEntries = Object.values(tags).map(tag => ({
-					ruuvi_id: tag.id,
-					datetime: new Date(tag.timestamp * 1000).toISOString(),
-					temperature: tag.temperature,
-					humidity: tag.humidity,
-					voltage: tag.voltage
+				
+				historyEntries = Object.values(tags).map(({ id, timestamp, temperature, humidity, voltage }) => ({
+					ruuvi_id: id,
+					datetime: new Date(timestamp * 1000), // TODO: datetime must be a JS Date. This needs better handling.
+					temperature: temperature,
+					humidity: humidity,
+					voltage: voltage
 				}));
 				break;
 			}
