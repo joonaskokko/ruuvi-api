@@ -13,13 +13,15 @@ export async function getTags(): Promise<Tag[]> {
 }
 
 export async function getTagById(id: number): Promise<Tag> {
-	const tag: object = await db('tag').where(id).first();
+	if (!id) throw new Error("Illegal ID passed.");
+	const tag: object = await db('tag').where('id', id).first();
 	
 	return tag;
 }
 
 export async function getTagByRuuviId(ruuvi_id: string): Promise<Tag> {
-	const tag: object = await db('tag').where(ruuvi_id).first();
+	if (!ruuvi_id) throw new Error("Illegal Ruuvi ID passed.");
+	const tag: object = await db('tag').where('ruuvi_id', ruuvi_id).first();
 	
 	return tag;
 }
@@ -36,7 +38,7 @@ export async function ensureTag({ ruuvi_id, name }): Promise<Tag> {
 	// Check if the tag already exists. If not, create it.
 	if (!tag) {
 		// Create and load the tag.
-		let tag_id: number = await insertTag({ ruuvi_id, name });
+		const tag_id: number = await insertTag({ ruuvi_id, name });
 		tag = await getTagById(tag_id);
 	}
 	
