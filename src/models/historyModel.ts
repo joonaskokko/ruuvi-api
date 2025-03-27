@@ -1,5 +1,5 @@
 import db from '../config/database.ts';
-import { ensureTag } from '../models/tagModel.ts';
+import { ensureTag, getTags } from '../models/tagModel.ts';
 
 export interface History {
 	ruuvi_id?: string;
@@ -70,13 +70,18 @@ export async function getCurrentHistory(): Promise<History[]> {
 }
 
 // Utility function get maximum value of a metric.
-export async function getMaximumValueByTag({ tag_id, metric, date_start, date_end }): number {
+export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, date_end }): number {
+	if (type !== 'min' && type !== 'max') throw new Error("Type needs to be min or max.");
 	if (!date_start || !date_end) throw new Error("Data range must contain start and end date time.");
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!metric) throw new Error("Missing metric name.");
 	
 	const { value }: number = await db('history')
-		.max({ value: metric })
+		.modify(query => {
+			if (type === 'min') query.min({ value: metric });
+			if (type === 'max') query.max({ value: metric });
+		})
+		.max({ value: metric }) // This resolves to .min or .max.
 		.where('tag_id', tag_id)
 		.whereBetween('datetime', [ date_start, date_end ])
 		.first();
@@ -87,73 +92,50 @@ export async function getMaximumValueByTag({ tag_id, metric, date_start, date_en
 export async function cleanOldHistory(days: number): number {
 	if (!days || days < 0) throw new Error("Invalid amount of days.");
 	
-	let deleteOlder = new Date();
-	deleteOlder.setDate(deleteOlder.getDate() - days);
+	let delete_older = new Date();
+	delete_older.setDate(delete_older.getDate() - days);
 	
-	const rowsRemoved = await db('history')
-		where('datetime', '<', deleteOlder)
+	const rows_removed = await db('history')
+		where('datetime', '<', delete_older)
 		.del();
 	
-	return rowsRemoved;
+	return rows_removed;
 }
 
 export async function aggregateHistory(date: Date) {
-	if (!(date instanceof Date)) throw new Error("Invalid date.");
-	
+	// Call getTags to get the list of all tags.
+	const tags = await getTags();
+	if (!(date instanceof Date)) throw new Error("Invalid date provided.");
+	if (!tags) throw new Error("No tags in the database to aggregate.");
+
+	// Set the start and end date for the range
 	const date_start = new Date(date);
 	date_start.setHours(0, 0, 0, 0);
-	
+
 	const date_end = new Date(date);
-	date_end.setDate(date_end.getDate() + 1);
+	date_end.setDate(date_end.getDate() + 1);	 // Add 1 day to set the end date at midnight
 	date_end.setHours(0, 0, 0, 0);
+
+	// Loop through tags and get min/max values for each tag
+	let aggregated_histories = await Promise.all(
+		tags.map(async (tag) => {
+			// Fetch the min and max values for each tag
+			const temperature_min = await getMinOrMaxValueByTag({ type: 'min', tag_id: tag.id, metric: 'temperature', date_start, date_end });
+			const temperature_max = await getMinOrMaxValueByTag({ type: 'max', tag_id: tag.id, metric: 'temperature', date_start, date_end });
+			const humidity_min = await getMinOrMaxValueByTag({ type: 'min', tag_id: tag.id, metric: 'humidity', date_start, date_end });
+			const humidity_max = await getMinOrMaxValueByTag({ type: 'max', tag_id: tag.id, metric: 'humidity', date_start, date_end });
+			
+			return { tag_id: tag.id, date, temperature_min, temperature_max, humidity_min, humidity_max }
+		}));
 	
-	console.log(date_start); console.log(date_end);
-	
-	// Fetch the history data for the specific date
-	const history = await getHistory({ date_start, date_end });
-
-	// Initialize an object to store the aggregated results for each tag
-	const aggregatedResults = {};
-
-	// Group data by tag_id
-	history.forEach(row => {
-		const { tag_id, temperature, humidity, date: rowDate } = row;
-		
-		// Initialize tag_id entry if not exists
-		if (!aggregatedResults[tag_id]) {
-			aggregatedResults[tag_id] = {
-				tag_id,
-				date: date,
-				temperatures: [],
-				humidities: []
-			};
-		}
-
-		// Add temperature and humidity values to arrays
-		aggregatedResults[tag_id].temperatures.push(temperature);
-		aggregatedResults[tag_id].humidities.push(humidity);
-	});
-
-	// Calculate min/max values using Math.min() and Math.max()
-	const resultsArray = Object.values(aggregatedResults).map(tag => {
-		const temperature_min = Math.min(...tag.temperatures);
-		const temperature_max = Math.max(...tag.temperatures);
-		const humidity_min = Math.min(...tag.humidities);
-		const humidity_max = Math.max(...tag.humidities);
-
-		// Return the aggregated result for this tag
-		return {
-			tag_id: tag.tag_id,
-			date: tag.date,
-			temperature_min,
-			temperature_max,
-			humidity_min,
-			humidity_max
-		};
-	});
+	// Filter out entries where all values are null
+	aggregated_histories = aggregated_histories.filter(
+		({ temperature_min, temperature_max, humidity_min, humidity_max }) =>
+			temperature_min !== null || temperature_max !== null || humidity_min !== null || humidity_max !== null
+	);
 
 	// Save the aggregated results into the `history_longterm` table
-	await db('history_longterm').insert(resultsArray);
+	await db('history_longterm').insert(aggregated_histories);
 
-	return resultsArray;
+	return aggregated_histories;
 }
