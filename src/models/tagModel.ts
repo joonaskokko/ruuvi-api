@@ -33,7 +33,7 @@ export async function insertTag({ ruuvi_id, name }): Promise<number> {
 }
 
 export async function ensureTag({ ruuvi_id, name }): Promise<Tag> {
-	let tag: object = await getTagByRuuviId({ ruuvi_id });
+	let tag: object = await getTagByRuuviId(ruuvi_id);
 	
 	// Check if the tag already exists. If not, create it.
 	if (!tag) {
