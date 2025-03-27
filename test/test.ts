@@ -127,4 +127,9 @@ await fetch(url + "/history")
 
 console.log(await historyModel.getMaximumValueByTag({ tag_id: 2, metric: 'temperature', date_start: new Date('2020-02-01T00:00:00+02:00'), date_end: new Date('2020-02-03T00:00:00+02:00') })); // 17.2
 
+const aggregateDate = new Date('2020-02-02');
+
+console.log(await historyModel.aggregateHistory(aggregateDate));
+
+
 process.exit();
