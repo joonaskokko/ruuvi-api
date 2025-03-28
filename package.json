@@ -3,6 +3,10 @@
   "version": "0.1.4",
   "description": "App that gets data from Ruuvi gateway and saves it to an SQL database.",
   "main": "index.ts",
+  "engines": {
+    "node": ">=23.10.0",
+    "npm": ">=10.9.2"
+  },
   "scripts": {
     "start": "node index.ts --experimental-transform-types",
     "test": "node ./test/test.ts --experimental-transform-types"
