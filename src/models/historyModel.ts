@@ -22,7 +22,7 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
 	
 	// Set battery low based on voltage. Note: overrides battery_low.
 	if (voltage) {
-		battery_low = voltage < 2.5;
+		battery_low = voltage < 2;
 	}
 	
 	// Insert into history. Use tag ID here instead of Ruuvi ID.
@@ -65,6 +65,10 @@ export async function getCurrentHistory(): Promise<History[]> {
 		)
 		.select('history.*', 'tag.name as tag_name')
 		.orderBy('tag_name', 'ASC');
+	
+		// Get maximum and minimum last 12 hours.
+		
+		// Get direction of temperature and humidity.
 	
 	return current;
 }
