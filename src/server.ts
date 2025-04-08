@@ -1,11 +1,11 @@
 import express from 'express';
 import { saveHistory, getHistory, getCurrentHistory } from './models/historyModel.ts';
 
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { config as loadEnv } from 'dotenv';
+loadEnv();
 
+const { SERVER_PORT } = process.env;
 const app: object = express();
-const PORT: number = process.env.SERVER_PORT || 8080;
 
 app.use(express.json());
 
@@ -91,6 +91,6 @@ app.use((err, req, res, next) => {
 	res.json({ error: "Something went wrong." });
 });
 
-app.listen(PORT, () => {
-	console.log(`Server running on port ${PORT}`);
+app.listen(SERVER_PORT, () => {
+	console.log(`Server running on port ${SERVER_PORT}`);
 });

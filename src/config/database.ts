@@ -1,20 +1,28 @@
 import knex from 'knex';
 import { installSchema } from './database.schema.ts';
-import * as dotenv from 'dotenv';
+import { config as loadEnv } from 'dotenv';
 
-dotenv.config();
+loadEnv();
+
+const {
+	DB_HOST,
+	DB_USER,
+	DB_PASSWORD,
+	DB_NAME,
+	NODE_ENV
+} = process.env;
 
 const config = {
 	client: 'mysql2',
 	connection: {
-		host: process.env.DB_HOST,
-		user: process.env.DB_USER,
-		password: process.env.DB_PASSWORD,
-		database: process.env.DB_NAME,
+		host: DB_HOST,
+		user: DB_USER,
+		password: DB_PASSWORD,
+		database: DB_NAME,
 	},
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (NODE_ENV === 'test') {
 	config.client = 'sqlite3';
 	config.connection = { filename: ':memory:' };
 	config.useNullAsDefault = true;
