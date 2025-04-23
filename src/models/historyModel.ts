@@ -1,5 +1,6 @@
 import db from '../config/database.ts';
 import { ensureTag, getTags } from '../models/tagModel.ts';
+import { subDays, subHours } from 'date-fns';
 
 const METRICS: string[] = [ 'temperature', 'humidity' ];
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = 12;
@@ -94,15 +95,22 @@ export async function getCurrentHistory(): Promise<History[]> {
 	// Get maximum and minimum last 12 hours and get direction of temperature and humidity.
 	history = await Promise.all(history.map(async row => {
 		const tag_id: number = row.tag_id;
-		const date_end: Date = new Date(row.datetime);
-		const date_start: Date = new Date(date_end.getTime() - (CURRENT_HISTORY_MIN_MAX_HOURS * 60 * 60 * 1000)); // Argh.
+		const date_end: Date = row.datetime;
+		const date_start: Date = subHours(date_end, CURRENT_HISTORY_MIN_MAX_HOURS);
 		
-		row.temperature_min = await getMinOrMaxValueByTag({ tag_id, type: 'min', metric: 'temperature', date_start, date_end });
-		row.temperature_max = await getMinOrMaxValueByTag({ tag_id, type: 'max', metric: 'temperature', date_start, date_end });
-		row.temperature_trend = await getMetricTrendByTag({ tag_id, metric: 'temperature' });
-		row.humidity_min = await getMinOrMaxValueByTag({ tag_id, type: 'min', metric: 'humidity', date_start, date_end });
-		row.humidity_max = await getMinOrMaxValueByTag({ tag_id, type: 'max', metric: 'humidity', date_start, date_end });
-		row.humidity_trend = await getMetricTrendByTag({ tag_id, metric: 'humidity' });
+		const temperature = {};
+		temperature.current = row.temperature;		
+		temperature.min = await getMinOrMaxValueByTag({ tag_id, type: 'min', metric: 'temperature', date_start, date_end });
+		temperature.max = await getMinOrMaxValueByTag({ tag_id, type: 'max', metric: 'temperature', date_start, date_end });
+		temperature.trend = await getMetricTrendByTag({ tag_id, metric: 'temperature' });
+		row.temperature = temperature;
+		
+		const humidity = {};
+		humidity.current = row.humidity;
+		humidity.min = await getMinOrMaxValueByTag({ tag_id, type: 'min', metric: 'humidity', date_start, date_end });
+		humidity.max = await getMinOrMaxValueByTag({ tag_id, type: 'max', metric: 'humidity', date_start, date_end });
+		humidity.trend = await getMetricTrendByTag({ tag_id, metric: 'humidity' });
+		row.humidity = humidity;
 		
 		return row;
 	}));
@@ -148,6 +156,11 @@ export async function getMetricTrendByTag({ tag_id, metric }): Promise<number> {
 	// Get history and limit it to 3.
 	const metric_values: History[] = await getHistory({ tag_id, limit: 3 })
 	
+	// If there isn't enough history, return 0 eg. staying the same.
+	if (metric_values.length < 3) {
+		return 0;
+	}
+	
 	// Flatten the array to only values without keys.
 	const [ first, second, third ]: number[] = metric_values.map(row => row[metric]);
 
@@ -171,8 +184,7 @@ export async function getMetricTrendByTag({ tag_id, metric }): Promise<number> {
 export async function cleanOldHistory(days: number): Promise<number> {
 	if (!days || days < 0) throw new Error("Invalid amount of days.");
 	
-	let delete_older: Date = new Date();
-	delete_older.setDate(delete_older.getDate() - days);
+	const delete_older: Date = subDays(new Date(), days);
 	
 	const rows_removed: number = await db('history')
 		where('datetime', '<', delete_older)
@@ -192,9 +204,11 @@ export async function aggregateHistory(date: Date): void {
 	if (!tags) throw new Error("No tags in the database to aggregate.");
 
 	// Set the start and end date for the range
+	// TODO: Use date-fns.
 	const date_start: Date = new Date(date);
 	date_start.setHours(0, 0, 0, 0);
 
+	// TODO: Use date-fns.
 	const date_end: Date = new Date(date);
 	date_end.setDate(date_end.getDate() + 1);	 // Add 1 day to set the end date at midnight
 	date_end.setHours(0, 0, 0, 0);
