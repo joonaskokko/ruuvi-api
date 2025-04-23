@@ -6,11 +6,19 @@ export interface Tag {
 	name?: string;
 }
 
+/**
+ * Get all tags.
+ */
+
 export async function getTags(): Promise<Tag[]> {
 	const tags: object[] = await db('tag');
 	
 	return tags;
 }
+
+/**
+ * Get single tag by tag ID.
+ */
 
 export async function getTagById(id: number): Promise<Tag> {
 	if (!id) throw new Error("Illegal ID passed.");
@@ -19,6 +27,10 @@ export async function getTagById(id: number): Promise<Tag> {
 	return tag;
 }
 
+/**
+ * Get single tag by Ruuvi ID (MAC).
+ */
+
 export async function getTagByRuuviId(ruuvi_id: string): Promise<Tag> {
 	if (!ruuvi_id) throw new Error("Illegal Ruuvi ID passed.");
 	const tag: object = await db('tag').where('ruuvi_id', ruuvi_id).first();
@@ -26,11 +38,19 @@ export async function getTagByRuuviId(ruuvi_id: string): Promise<Tag> {
 	return tag;
 }
 
+/**
+ * Insert new tag.
+ */
+
 export async function insertTag({ ruuvi_id, name }): Promise<number> {
 	const [ id ]: number = await db('tag').insert({ ruuvi_id, name });
 	
 	return id;
 }
+
+/**
+ * Check that we have given tag and create it if not. Returns the tag back.
+ */
 
 export async function ensureTag({ ruuvi_id, name }): Promise<Tag> {
 	let tag: object = await getTagByRuuviId(ruuvi_id);

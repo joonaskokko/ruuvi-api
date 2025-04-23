@@ -1,9 +1,8 @@
 import db from '../config/database.ts';
 import { ensureTag, getTags } from '../models/tagModel.ts';
 
-const METRICS = [ 'temperature', 'humidity' ];
-const DEFAULT_TREND_VALUE_AMOUNT = 3;
-const CURRENT_HISTORY_MIN_MAX_HOURS = 12;
+const METRICS: string[] = [ 'temperature', 'humidity' ];
+const CURRENT_HISTORY_MIN_MAX_HOURS: number = 12;
 
 export interface History {
 	ruuvi_id?: string;
@@ -15,12 +14,18 @@ export interface History {
 	battery_low?: boolean;
 }
 
+
 /**
- * Utility function to check given metric validity.
+ * Utility function for checking metric validity.
  */
+
 function isValidMetric(metric) {
 	return METRICS.includes(metric);
 }
+
+/**
+ * Save history entry to the database.
+ */
 
 export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, humidity, voltage, battery_low = false }: History): Promise<boolean> {
 	if (!tag_id && !ruuvi_id) throw new Error("Need either tag ID or Ruuvi ID.");
@@ -42,6 +47,10 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
 	return true;
 }
 
+/**
+ * Get history.
+ */
+
 export async function getHistory({ date_start = null, date_end = null, tag_id = null, limit = null } = {}): Promise<History[]> {
 	if ((date_start && !date_end) || (!date_start && date_end)) throw new Error("Data range must contain start and end date time or neither.");
 	
@@ -60,6 +69,10 @@ export async function getHistory({ date_start = null, date_end = null, tag_id = 
 		
 	return history;
 }
+
+/**
+ * Get current history, eg. latest single value per tag.
+ */
 
 export async function getCurrentHistory(): Promise<History[]> {
 	let history: object[] = await db('history')
@@ -80,9 +93,9 @@ export async function getCurrentHistory(): Promise<History[]> {
 	
 	// Get maximum and minimum last 12 hours and get direction of temperature and humidity.
 	history = await Promise.all(history.map(async row => {
-		const tag_id = row.tag_id;
-		const date_end = new Date(row.datetime);
-		const date_start = new Date(date_end.getTime() - (CURRENT_HISTORY_MIN_MAX_HOURS * 60 * 60 * 1000)); // Argh.
+		const tag_id: number = row.tag_id;
+		const date_end: Date = new Date(row.datetime);
+		const date_start: Date = new Date(date_end.getTime() - (CURRENT_HISTORY_MIN_MAX_HOURS * 60 * 60 * 1000)); // Argh.
 		
 		row.temperature_min = await getMinOrMaxValueByTag({ tag_id, type: 'min', metric: 'temperature', date_start, date_end });
 		row.temperature_max = await getMinOrMaxValueByTag({ tag_id, type: 'max', metric: 'temperature', date_start, date_end });
@@ -97,8 +110,11 @@ export async function getCurrentHistory(): Promise<History[]> {
 	return history;
 }
 
-// Utility function get maximum value of a metric.
-export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, date_end }): number {
+/**
+ * Get single min or max value from a metric by tag.
+ */
+
+export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, date_end }): Promise<number> {
 	if (!['min', 'max'].includes(type)) throw new Error("Type needs to be min or max.");
 	if (!date_start || !date_end) throw new Error("Data range must contain start and end date time.");
 	if (date_start > date_end) throw new Error("Start date cannot be before end date.");
@@ -120,14 +136,20 @@ export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, 
 	return value;
 }
 
-export async function getMetricTrendByTag({ tag_id, metric }): number {
+/**
+ * Get metric trend by tag. Returns 1 for increasing, -1 for decreasing or 0 for staying the same.
+ */
+
+export async function getMetricTrendByTag({ tag_id, metric }): Promise<number> {
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!metric) throw new Error("Missing metric name.");
 	if (metric && !isValidMetric(metric)) throw new Error("Not a valid metric name: " + metric);
 		
-	// Get history and limit it to DEFAULT_TREND_VALUE_AMOUNT.
-	const metric_values: History[] = await getHistory( { tag_id, limit: DEFAULT_TREND_VALUE_AMOUNT })
-	const [ first, second, third ] = metric_values.map(row => row[metric]);
+	// Get history and limit it to 3.
+	const metric_values: History[] = await getHistory({ tag_id, limit: 3 })
+	
+	// Flatten the array to only values without keys.
+	const [ first, second, third ]: number[] = metric_values.map(row => row[metric]);
 
 	// Very simple trend comparison.
 	// TODO: Add some sort of tolerance here, eg. 0.05 or something.
@@ -142,35 +164,43 @@ export async function getMetricTrendByTag({ tag_id, metric }): number {
 	}
 }
 
-export async function cleanOldHistory(days: number): number {
+/**
+ * Housekeeping function to clean old history entries away.
+ */
+
+export async function cleanOldHistory(days: number): Promise<number> {
 	if (!days || days < 0) throw new Error("Invalid amount of days.");
 	
-	let delete_older = new Date();
+	let delete_older: Date = new Date();
 	delete_older.setDate(delete_older.getDate() - days);
 	
-	const rows_removed = await db('history')
+	const rows_removed: number = await db('history')
 		where('datetime', '<', delete_older)
 		.del();
 	
 	return rows_removed;
 }
 
-export async function aggregateHistory(date: Date) {
+/**
+ * Aggregate history entries as day entries.
+ */
+
+export async function aggregateHistory(date: Date): void {
 	// Call getTags to get the list of all tags.
 	const tags = await getTags();
 	if (!(date instanceof Date)) throw new Error("Invalid date provided.");
 	if (!tags) throw new Error("No tags in the database to aggregate.");
 
 	// Set the start and end date for the range
-	const date_start = new Date(date);
+	const date_start: Date = new Date(date);
 	date_start.setHours(0, 0, 0, 0);
 
-	const date_end = new Date(date);
+	const date_end: Date = new Date(date);
 	date_end.setDate(date_end.getDate() + 1);	 // Add 1 day to set the end date at midnight
 	date_end.setHours(0, 0, 0, 0);
 
 	// Loop through tags and get min/max values for each tag
-	let aggregated_histories = await Promise.all(
+	let aggregated_histories: object[] = await Promise.all(
 		tags.map(async (tag) => {
 			// Fetch the min and max values for each tag
 			const temperature_min = await getMinOrMaxValueByTag({ type: 'min', tag_id: tag.id, metric: 'temperature', date_start, date_end });

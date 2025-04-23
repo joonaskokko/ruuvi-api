@@ -156,6 +156,7 @@ async function testAggregateData() {
 }
 
 async function testHistoryTrend() {
+	console.log("Testing trend: ");
 	console.log(await historyModel.getMetricTrendByTag({ tag_id: 2, metric: 'temperature' }))
 }
 
