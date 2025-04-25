@@ -1,6 +1,6 @@
 import db from '../config/database.ts';
 import { ensureTag, getTags } from '../models/tagModel.ts';
-import { subDays, subHours } from 'date-fns';
+import { addDays, subDays, subHours } from 'date-fns';
 
 const METRICS: string[] = [ 'temperature', 'humidity' ];
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = 12;
@@ -14,7 +14,6 @@ export interface History {
 	voltage?: number;
 	battery_low?: boolean;
 }
-
 
 /**
  * Utility function for checking metric validity.
@@ -42,6 +41,11 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
 		battery_low = voltage < 2;
 	}
 	
+	// Remove decimals from metric values to something sensible other than 1.18626.
+	// TODO: A loop perhaps from METRICS?
+	temperature = Number(temperature.toFixed(2));
+	humidity = Number(humidity.toFixed(2));
+	
 	// Insert into history. Use tag ID here instead of Ruuvi ID.
 	await db('history').insert({ tag_id, datetime, temperature, humidity, battery_low });
 	
@@ -53,16 +57,12 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
  */
 
 export async function getHistory({ date_start = null, date_end = null, tag_id = null, limit = null } = {}): Promise<History[]> {
-	if ((date_start && !date_end) || (!date_start && date_end)) throw new Error("Data range must contain start and end date time or neither.");
-	
 	const history: object[] = await db('history')
 		.leftJoin('tag', 'tag.id', 'tag_id')
 		.select([ 'history.*', 'tag.name as tag_name' ])
 		.modify(query => {
-			if (date_start && date_end) {
-				query.whereBetween('datetime', [date_start, date_end] );
-			}
-		
+			if (date_start) query.where('datetime', '>', date_start);
+			if (date_end) query.where('datetime', '<', date_end);
 			if (tag_id) query.where('tag.id', tag_id);
 			if (limit) query.limit(limit);
 		})
@@ -98,18 +98,31 @@ export async function getCurrentHistory(): Promise<History[]> {
 		const date_end: Date = row.datetime;
 		const date_start: Date = subHours(date_end, CURRENT_HISTORY_MIN_MAX_HOURS);
 		
+		// Same for all function calls.
+		const params = {
+			tag_id,
+			date_start,
+			date_end
+		};
+		
 		const temperature = {};
 		temperature.current = row.temperature;		
-		temperature.min = await getMinOrMaxValueByTag({ tag_id, type: 'min', metric: 'temperature', date_start, date_end });
-		temperature.max = await getMinOrMaxValueByTag({ tag_id, type: 'max', metric: 'temperature', date_start, date_end });
-		temperature.trend = await getMetricTrendByTag({ tag_id, metric: 'temperature' });
+		temperature.min = await getMinOrMaxValueByTag(
+			{ ...params, type: 'min', metric: 'temperature' });
+		temperature.max = await getMinOrMaxValueByTag(
+			{ ...params, type: 'max', metric: 'temperature' });
+		temperature.trend = await getMetricTrendByTag(
+			{ ...params, metric: 'temperature' });
 		row.temperature = temperature;
-		
+				
 		const humidity = {};
 		humidity.current = row.humidity;
-		humidity.min = await getMinOrMaxValueByTag({ tag_id, type: 'min', metric: 'humidity', date_start, date_end });
-		humidity.max = await getMinOrMaxValueByTag({ tag_id, type: 'max', metric: 'humidity', date_start, date_end });
-		humidity.trend = await getMetricTrendByTag({ tag_id, metric: 'humidity' });
+		humidity.min = await getMinOrMaxValueByTag(
+			{ ...params, type: 'min', metric: 'humidity' });
+		humidity.max = await getMinOrMaxValueByTag(
+			{ ...params, type: 'max', metric: 'humidity' });
+		humidity.trend = await getMetricTrendByTag(
+			{ ...params, metric: 'humidity' });
 		row.humidity = humidity;
 		
 		return row;
@@ -181,58 +194,13 @@ export async function getMetricTrendByTag({ tag_id, metric }): Promise<number> {
  * Housekeeping function to clean old history entries away.
  */
 
-export async function cleanOldHistory(days: number): Promise<number> {
-	if (!days || days < 0) throw new Error("Invalid amount of days.");
-	
-	const delete_older: Date = subDays(new Date(), days);
+export async function cleanOldHistory(delete_older_than_days: Date): Promise<number> {
+	if (!(delete_older_than_days instanceof Date)) throw new Error("Clean older than date isn't a date object.");
+	if (delete_older_than_days > new Date()) throw new Error("Date cannot be in the future.");
 	
 	const rows_removed: number = await db('history')
-		where('datetime', '<', delete_older)
+		.where('datetime', '<', delete_older_than_days)
 		.del();
 	
 	return rows_removed;
-}
-
-/**
- * Aggregate history entries as day entries.
- */
-
-export async function aggregateHistory(date: Date): void {
-	// Call getTags to get the list of all tags.
-	const tags = await getTags();
-	if (!(date instanceof Date)) throw new Error("Invalid date provided.");
-	if (!tags) throw new Error("No tags in the database to aggregate.");
-
-	// Set the start and end date for the range
-	// TODO: Use date-fns.
-	const date_start: Date = new Date(date);
-	date_start.setHours(0, 0, 0, 0);
-
-	// TODO: Use date-fns.
-	const date_end: Date = new Date(date);
-	date_end.setDate(date_end.getDate() + 1);	 // Add 1 day to set the end date at midnight
-	date_end.setHours(0, 0, 0, 0);
-
-	// Loop through tags and get min/max values for each tag
-	let aggregated_histories: object[] = await Promise.all(
-		tags.map(async (tag) => {
-			// Fetch the min and max values for each tag
-			const temperature_min = await getMinOrMaxValueByTag({ type: 'min', tag_id: tag.id, metric: 'temperature', date_start, date_end });
-			const temperature_max = await getMinOrMaxValueByTag({ type: 'max', tag_id: tag.id, metric: 'temperature', date_start, date_end });
-			const humidity_min = await getMinOrMaxValueByTag({ type: 'min', tag_id: tag.id, metric: 'humidity', date_start, date_end });
-			const humidity_max = await getMinOrMaxValueByTag({ type: 'max', tag_id: tag.id, metric: 'humidity', date_start, date_end });
-			
-			return { tag_id: tag.id, date, temperature_min, temperature_max, humidity_min, humidity_max }
-		}));
-	
-	// Filter out entries where all values are null
-	aggregated_histories = aggregated_histories.filter(
-		({ temperature_min, temperature_max, humidity_min, humidity_max }) =>
-			temperature_min !== null || temperature_max !== null || humidity_min !== null || humidity_max !== null
-	);
-
-	// Save the aggregated results into the `history_longterm` table
-	await db('history_longterm').insert(aggregated_histories);
-
-	return aggregated_histories;
 }

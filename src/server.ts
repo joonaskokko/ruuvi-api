@@ -1,5 +1,6 @@
 import express from 'express';
 import { saveHistory, getHistory, getCurrentHistory } from './models/historyModel.ts';
+import { getAggregatedHistory } from './models/aggregatedHistoryModel.ts';
 
 import { config as loadEnv } from 'dotenv';
 loadEnv();
@@ -12,42 +13,26 @@ app.use(express.json());
 // POST /history - Save history data
 app.post('/history', async (req, res, next) => {
 	try {
-		const { format } = req.query;
+		const { tags } = req.body?.data;
 		
-		let historyEntries = [];
-
-		switch (format) {
-			// Own, custom format that matches the tag model.
-			case 'ruuvi-api': {
-				const { ruuvi_id, datetime, temperature, humidity, battery_low } = req.body;
-
-				if (!ruuvi_id || !datetime || !temperature || !humidity || !battery_low) {
-					return res.status(400).json({ error: 'Missing required fields' });
-				}
-				historyEntries = [{ ruuvi_id, datetime, temperature, humidity, battery_low }];
-			}
-
-			default: {
-				const tags = req.body?.data?.tags;
-				
-				// This is Ruuvi GW's test call in the wizard.
-				if (typeof tags === 'object' && Object.keys(tags).length === 0) {
-					return res.status(200).json({ message: 'Connection working without tag data.'});
-				}
-				else if (!tags || typeof tags !== 'object') {
-					return res.status(400).json({ error: 'Invalid ruuvi-gateway payload' });
-				}
-				
-				historyEntries = Object.values(tags).map(({ id, timestamp, temperature, humidity, voltage }) => ({
-					ruuvi_id: id,
-					datetime: new Date(timestamp * 1000), // TODO: datetime must be a JS Date. This needs better handling.
-					temperature: temperature,
-					humidity: humidity,
-					voltage: voltage
-				}));
-				break;
-			}
+		// This is Ruuvi GW's test call in the wizard.
+		if (typeof tags === 'object' && Object.keys(tags).length === 0) {
+			return res.status(200).json({ message: 'Connection working without tag data.'});
 		}
+		else if (!tags || typeof tags !== 'object') {
+			return res.status(400).json({ error: 'Invalid ruuvi-gateway payload' });
+		}
+		
+		// Tag data is a single object with Ruuvi ID as key.
+		// Need to loop them with Object.values().
+		const historyEntries = Object.values(tags)
+			.map(({ id, timestamp, temperature, humidity, voltage }) => ({
+				ruuvi_id: id,
+				datetime: new Date(timestamp * 1000),
+				temperature: temperature,
+				humidity: humidity,
+				voltage: voltage
+		}));
 
 		if (!historyEntries.length) {
 			return res.status(400).json({ error: 'No valid history entries' });
@@ -78,6 +63,23 @@ app.get('/history', async (req, res, next) => {
 app.get('/current', async (req, res, next) => {
 	try {
 		const records = await getCurrentHistory();
+		res.json(records);
+	}
+	catch (error) {
+		next(error);
+	}
+});
+
+// GET /history_aggregated - Fetch all aggregated history.
+app.get('/history_aggregated', async (req, res, next) => {
+	try {
+		const { tag, date } = req.query;
+		const records = await getAggregatedHistory(
+		{
+			tag_id: tag ?? null,
+			date: date ?? null 
+		});
+		
 		res.json(records);
 	}
 	catch (error) {

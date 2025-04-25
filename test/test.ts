@@ -6,6 +6,9 @@ import '../index.ts';
 
 import * as tagModel from '../src/models/tagModel.ts';
 import * as historyModel from '../src/models/historyModel.ts';
+import * as aggregatedHistoryModel from '../src/models/aggregatedHistoryModel.ts';
+import * as cleanHistoryTask from '../src/tasks/cleanHistoryTask.ts';
+import * as aggregateHistoryTask from '../src/tasks/aggregateHistoryTask.ts';
 
 const url = 'http://localhost:8080';
 
@@ -53,7 +56,7 @@ async function testCreateHistory() {
 		{
 			tag_id: 2,
 			datetime: new Date("2020-02-01T20:02:04+02:00"),
-			temperature: 1.03,
+			temperature: 1.0361112,
 			humidity: 70.11,
 			battery_low: false
 		}
@@ -73,7 +76,7 @@ async function testCreateHistory() {
 		{
 			tag_id: 2,
 			datetime: new Date("2020-02-02T23:59:04+02:00"),
-			temperature: 1.57,
+			temperature: 1.571515,
 			humidity: 100,
 			battery_low: true
 		}
@@ -94,7 +97,9 @@ async function testGetHistory() {
 	console.log("Test getting history of tag 1:");
 	console.log(await historyModel.getHistory({ tag_id: 1 }));
 	console.log("Only 2020-02-02");
-	console.log(await historyModel.getHistory({ date_start: new Date("2020-01-01"), date_end: new Date("2025-01-01") }));
+	console.log(await historyModel.getHistory(
+		{ date_start: new Date("2020-01-01"), date_end: new Date("2025-01-01") }
+	));
 }
 
 async function testGetHistoryFromServer() {
@@ -150,14 +155,42 @@ async function testGetMinOrMax() {
 }
 
 async function testAggregateData() {
+	console.log("Test aggregated data");
 	const aggregateDate = new Date('2020-02-02');
 
-	console.log(await historyModel.aggregateHistory(aggregateDate));
+	await aggregatedHistoryModel.aggregateHistory(aggregateDate);
+	console.log(await aggregatedHistoryModel.getAggregatedHistory({ tag_id: 2 }));
+	console.log(await aggregatedHistoryModel.getAggregatedHistory({ date: aggregateDate }));
+	console.log(await aggregatedHistoryModel.getAggregatedHistory());
 }
 
 async function testHistoryTrend() {
 	console.log("Testing trend: ");
 	console.log(await historyModel.getMetricTrendByTag({ tag_id: 2, metric: 'temperature' }))
+}
+
+async function testAggregateHistoryTask() {
+	await aggregateHistoryTask.run();
+}
+
+async function testGetAggregatedDataFromServer() {
+	console.log("Get server aggregated data:");
+	await fetch(url + '/history_aggregated')
+		.then(response => response.json())
+		.then(data => console.log(data))
+		.catch(error => console.error('Error:', error)
+	);
+	
+	console.log("Get server aggregated data with tag ID 2:");
+	await fetch(url + '/history_aggregated?tag=2')
+		.then(response => response.json())
+		.then(data => console.log(data))
+		.catch(error => console.error('Error:', error)
+	);
+}
+
+async function testCleanHistoryTask() {
+	await cleanHistoryTask.run();
 }
 
 await testCreateTags();
@@ -168,7 +201,12 @@ await testGetHistoryFromServer();
 await testCurrentHistoryFromServer();
 await testRuuviGWPaylods();
 await testGetMinOrMax();
-await testAggregateData();
 await testHistoryTrend();
+
+await testAggregateData();
+await testAggregateHistoryTask();
+await testGetAggregatedDataFromServer();
+
+await testCleanHistoryTask();
 
 process.exit();

@@ -25,20 +25,16 @@ export async function installSchema(db: object): void {
 		});
 	}
 
-	if (!(await db.schema.hasTable('history_longterm'))) {
+	if (!(await db.schema.hasTable('history_aggregated'))) {
 		console.log("Creating history_longterm table");
-		await db.schema.createTable('history_longterm', (table) => {
+		await db.schema.createTable('history_aggregated', (table) => {
 			table.increments('id').unsigned().primary();
 			table.integer('tag_id').unsigned().nullable().index();
 			table.date('date').nullable();
 			table.float('temperature_min').nullable();
 			table.float('temperature_max').nullable();
-			table.float('temperature_day_average').nullable();
-			table.float('temperature_night_average').nullable();
 			table.float('humidity_min').nullable();
 			table.float('humidity_max').nullable();
-			table.float('humidity_day_average').nullable();
-			table.float('humidity_night_average').nullable();
 
 			table.foreign('tag_id').references('id').inTable('tag').onDelete('NO ACTION').onUpdate('NO ACTION');
 		});

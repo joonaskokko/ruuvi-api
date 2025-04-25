@@ -22,6 +22,7 @@ export async function getTags(): Promise<Tag[]> {
 
 export async function getTagById(id: number): Promise<Tag> {
 	if (!id) throw new Error("Illegal ID passed.");
+	
 	const tag: object = await db('tag').where('id', id).first();
 	
 	return tag;
@@ -33,6 +34,7 @@ export async function getTagById(id: number): Promise<Tag> {
 
 export async function getTagByRuuviId(ruuvi_id: string): Promise<Tag> {
 	if (!ruuvi_id) throw new Error("Illegal Ruuvi ID passed.");
+	
 	const tag: object = await db('tag').where('ruuvi_id', ruuvi_id).first();
 	
 	return tag;
@@ -42,7 +44,9 @@ export async function getTagByRuuviId(ruuvi_id: string): Promise<Tag> {
  * Insert new tag.
  */
 
-export async function insertTag({ ruuvi_id, name }): Promise<number> {
+export async function insertTag({ ruuvi_id, name }: Tag): Promise<number> {
+	if (!ruuvi_id) throw new Error("Missing Ruuvi ID.");
+	
 	const [ id ]: number = await db('tag').insert({ ruuvi_id, name });
 	
 	return id;
@@ -52,7 +56,9 @@ export async function insertTag({ ruuvi_id, name }): Promise<number> {
  * Check that we have given tag and create it if not. Returns the tag back.
  */
 
-export async function ensureTag({ ruuvi_id, name }): Promise<Tag> {
+export async function ensureTag({ ruuvi_id, name }: Tag): Promise<Tag> {
+	if (!ruuvi_id) throw new Error("Missing Ruuvi ID.");
+	
 	let tag: object = await getTagByRuuviId(ruuvi_id);
 	
 	// Check if the tag already exists. If not, create it.
