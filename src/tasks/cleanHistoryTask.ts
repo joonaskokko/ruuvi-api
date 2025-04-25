@@ -1,13 +1,14 @@
 import { cleanOldHistory } from '../models/historyModel.ts';
-import { subDays } from 'date-fns';
+import { subDays, format } from 'date-fns';
 
 const DAYS_TO_CLEAN = 7;
 
 export async function run(): Promise<boolean> {
 	// Clean history older than 7 days.
-	const rows_cleaned: number = await cleanOldHistory(subDays(new Date(), DAYS_TO_CLEAN));
-	
-	console.log("Cleaned " + rows_cleaned + " entries.");
+	const clean_date = subDays(new Date(), DAYS_TO_CLEAN);
+	console.log("Cleaning entries older than " + format(clean_date, 'yyyy-MM-dd'));
+	const rows_cleaned: number = await cleanOldHistory(clean_date);
+	console.log("Deleted " + rows_cleaned + " entries.");
 	
 	return true;
 }

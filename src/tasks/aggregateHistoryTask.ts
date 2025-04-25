@@ -1,7 +1,7 @@
 import { aggregateHistory, isDateAggregated } from '../models/aggregatedHistoryModel.ts';
 import type { History, getHistory } from '../models/historyModel.ts';
 import { getHistory } from '../models/historyModel.ts';
-import { isEqual } from 'date-fns';
+import { isEqual, format } from 'date-fns';
 
 export async function run(): Promise<boolean> {
 	const date_end = new Date();
@@ -26,7 +26,8 @@ export async function run(): Promise<boolean> {
 	// Go through the dates and check if it has aggregation data or not.
 	// If not, aggregate it.
 	await Promise.all(dates_with_data.map(async date => {
-		if (!await isDateAggregated(date)) {
+		if (await isDateAggregated({ date })) {
+			console.log("Aggregating day: " + format(date, 'yyyy-MM-dd'));
 			return aggregateHistory(date);
 		}
 	}));
