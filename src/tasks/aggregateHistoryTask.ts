@@ -4,7 +4,7 @@ import { getHistory } from '../models/historyModel.ts';
 import { isEqual, format } from 'date-fns';
 
 export async function run(): Promise<boolean> {
-	const date_end = new Date();
+	const date_end: Date = new Date();
 	date_end.setHours(0, 0, 0, 0); // Set to beginning of today.
 	
 	// Get complete days where we don't have aggregated data.
