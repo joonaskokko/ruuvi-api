@@ -26,7 +26,7 @@ export async function installSchema(db: object): void {
 	}
 
 	if (!(await db.schema.hasTable('history_aggregated'))) {
-		console.log("Creating history_longterm table");
+		console.log("Creating history_aggregated table");
 		await db.schema.createTable('history_aggregated', (table) => {
 			table.increments('id').unsigned().primary();
 			table.integer('tag_id').unsigned().nullable().index();
