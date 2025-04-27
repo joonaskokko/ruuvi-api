@@ -2,7 +2,7 @@ import * as historyCleaner from '../src/tasks/cleanHistoryTask.ts';
 import * as historyAggregator from '../src/tasks/aggregateHistoryTask.ts';
 import { scheduleJob, RecurrenceRule } from 'node-schedule';
 
-const midnight = new RecurrenceRule();
+const midnight: RecurrenceRule = new RecurrenceRule();
 midnight.hour = 0;
 midnight.minute = 0;
 

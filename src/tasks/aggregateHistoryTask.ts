@@ -10,7 +10,7 @@ export async function run(): Promise<boolean> {
 	// Get complete days where we don't have aggregated data.
 	const history: History[] = await getHistory({ date_end });
 	
-	const dates_with_data = history.reduce((dates, { datetime }) => {
+	const dates_with_data: Date[] = history.reduce((dates, { datetime }) => {
 		const date: Date = new Date(datetime);
 		// Normalise to midnight.
 		date.setHours(0, 0, 0, 0);
