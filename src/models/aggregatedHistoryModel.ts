@@ -93,7 +93,7 @@ export async function saveAggregatedHistory({ tag_id, date, temperature_min, tem
  */
 
 export async function getAggregatedHistory({ tag_id = null, date = null, limit = null } = {}): Promise<AggregatedHistory> {
-	const aggregated_history: object[] = await db('history_aggregated')
+	const aggregated_histories: object[] = await db('history_aggregated')
 		.leftJoin('tag', 'tag.id', 'tag_id')
 		.select([ 'history_aggregated.*', 'tag.name as tag_name' ])
 		.modify(query => {
@@ -105,8 +105,13 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 			if (limit) query.limit(limit);
 		})
 		.orderBy('history_aggregated.date', 'DESC');
+	
+	// Format date into a more sensible one.
+	aggregated_histories.forEach((aggregated_history) => {
+		aggregated_history.date = new Date(aggregated_history.date).toISOString().slice(0, 10);
+	});
 		
-	return aggregated_history;
+	return aggregated_histories;
 }
 
 /**
