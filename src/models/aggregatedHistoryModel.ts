@@ -1,7 +1,7 @@
 import db from '../config/database.ts';
 import { getMinOrMaxValueByTag } from '../models/historyModel.ts';
 import { getTags } from '../models/tagModel.ts';
-import { addDays, subDays, subHours } from 'date-fns';
+import { addDays, subDays, subHours, format } from 'date-fns';
 
 export interface AggregatedHistory {
 	tag_id: number,
@@ -108,7 +108,7 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 	
 	// Format date into a more sensible one.
 	aggregated_histories.forEach((aggregated_history) => {
-		aggregated_history.date = new Date(aggregated_history.date).toISOString().slice(0, 10);
+		aggregated_history.date = format(aggregated_history.date, 'yyyy-MM-dd');
 	});
 		
 	return aggregated_histories;
