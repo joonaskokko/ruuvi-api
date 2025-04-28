@@ -106,11 +106,29 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 		})
 		.orderBy('history_aggregated.date', 'DESC');
 	
-	// Format date into a more sensible one.
+	// Additional formatting.
 	aggregated_histories.forEach((aggregated_history) => {
+		// Format date to Y-m-d.
 		aggregated_history.date = format(aggregated_history.date, 'yyyy-MM-dd');
-	});
 		
+		// Format metrics.
+		aggregated_history.temperature = {
+			min: aggregated_history.temperature_min,
+			max: aggregated_history.temperature_min
+		}
+		
+		delete aggregated_history.temperature_min;
+		delete aggregated_history.temperature_max;
+		
+		aggregated_history.humidity = {
+			min: aggregated_history.humidity_min,
+			max: aggregated_history.humidity_min
+		}
+		
+		delete aggregated_history.humidity_min;
+		delete aggregated_history.humidity_max;
+	});
+	
 	return aggregated_histories;
 }
 
