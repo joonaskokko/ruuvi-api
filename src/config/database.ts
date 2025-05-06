@@ -1,5 +1,5 @@
 import knex from 'knex';
-import { installSchema } from './database.schema.ts';
+import installSchema from './database.schema.ts';
 import { config as loadEnv } from 'dotenv';
 
 loadEnv();

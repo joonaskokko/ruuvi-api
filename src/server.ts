@@ -1,4 +1,5 @@
 import express from 'express';
+import type { Express, Request, Response, NextFunction } from 'express';
 import { saveHistory, getHistory, getCurrentHistory } from './models/historyModel.ts';
 import { getAggregatedHistory } from './models/aggregatedHistoryModel.ts';
 
@@ -6,12 +7,12 @@ import { config as loadEnv } from 'dotenv';
 loadEnv();
 
 const { SERVER_PORT } = process.env;
-const app: object = express();
+const app: Express = express();
 
 app.use(express.json());
 
 // POST /history - Save history data
-app.post('/history', async (req, res, next) => {
+app.post('/history', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { tags } = req.body?.data;
 		
@@ -49,7 +50,7 @@ app.post('/history', async (req, res, next) => {
 });
 
 // GET /history - Fetch history data
-app.get('/history', async (req, res, next) => {
+app.get('/history', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const records = await getHistory();
 		res.json(records);
@@ -60,7 +61,7 @@ app.get('/history', async (req, res, next) => {
 });
 
 // GET /current - Fetch latest history data
-app.get('/current', async (req, res, next) => {
+app.get('/current', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const records = await getCurrentHistory();
 		res.json(records);
@@ -71,7 +72,7 @@ app.get('/current', async (req, res, next) => {
 });
 
 // GET /history_aggregated - Fetch all aggregated history.
-app.get('/history_aggregated', async (req, res, next) => {
+app.get('/history_aggregated', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { tag, date } = req.query;
 		const records = await getAggregatedHistory(
@@ -87,7 +88,7 @@ app.get('/history_aggregated', async (req, res, next) => {
 	}
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req: Request, res: Response, next: NextFunction) => {
 	console.error(err);
 	res.status(500);
 	res.json({ error: "Something went wrong." });
