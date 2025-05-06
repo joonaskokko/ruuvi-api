@@ -4,6 +4,7 @@ import { addDays, subDays, subHours } from 'date-fns';
 
 const METRICS: string[] = [ 'temperature', 'humidity' ];
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = 12;
+const UNREACHABLE_HOURS: number = 1;
 
 export interface History {
 	ruuvi_id?: string;
@@ -13,6 +14,14 @@ export interface History {
 	humidity?: number;
 	voltage?: number;
 	battery_low?: boolean;
+	unreachable?: boolean;
+}
+
+export interface Metric {
+	current: number,
+	min: number,
+	max: number,
+	trend: number
 }
 
 /**
@@ -24,10 +33,18 @@ function isValidMetric(metric) {
 }
 
 /**
+ * Utility function to check if tag is unreachable by last seen date time.
+*/
+
+function isUnreachable(tag) {
+	return (subHours(new Date(), UNREACHABLE_HOURS) > tag.datetime);
+}
+
+/**
  * Save history entry to the database.
  */
 
-export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, humidity, voltage, battery_low = false }: History): Promise<boolean> {
+export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, humidity, voltage, battery_low = false }: object): Promise<number> {
 	if (!tag_id && !ruuvi_id) throw new Error("Need either tag ID or Ruuvi ID.");
 	if (!(datetime instanceof Date)) throw new Error("Datetime isn't a date object.");
 	
@@ -47,9 +64,9 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
 	humidity = Number(humidity.toFixed(2));
 	
 	// Insert into history. Use tag ID here instead of Ruuvi ID.
-	await db('history').insert({ tag_id, datetime, temperature, humidity, battery_low });
-	
-	return true;
+	const [ id ]: number = await db('history').insert({ tag_id, datetime, temperature, humidity, battery_low });
+
+	return id;
 }
 
 /**
@@ -67,7 +84,7 @@ export async function getHistory({ date_start = null, date_end = null, tag_id = 
 			if (limit) query.limit(limit);
 		})
 		.orderBy('history.datetime', 'DESC');
-		
+	
 	return history;
 }
 
@@ -92,7 +109,9 @@ export async function getCurrentHistory(): Promise<History[]> {
 		.select('history.*', 'tag.name as tag_name')
 		.orderBy('tag_name', 'ASC');
 	
-	// Get maximum and minimum last 12 hours and get direction of temperature and humidity.
+	// Get maximum and minimum last 12 hours.
+	// Also get trend of temperature and humidity.
+	// Also tag unreachability.
 	history = await Promise.all(history.map(async row => {
 		const tag_id: number = row.tag_id;
 		const date_end: Date = row.datetime;
@@ -105,7 +124,7 @@ export async function getCurrentHistory(): Promise<History[]> {
 			date_end
 		};
 		
-		const temperature = {};
+		const temperature: Sensor = {};
 		temperature.current = row.temperature;		
 		temperature.min = await getMinOrMaxValueByTag(
 			{ ...params, type: 'min', metric: 'temperature' });
@@ -115,7 +134,7 @@ export async function getCurrentHistory(): Promise<History[]> {
 			{ ...params, metric: 'temperature' });
 		row.temperature = temperature;
 				
-		const humidity = {};
+		const humidity: Sensor = {};
 		humidity.current = row.humidity;
 		humidity.min = await getMinOrMaxValueByTag(
 			{ ...params, type: 'min', metric: 'humidity' });
@@ -124,6 +143,9 @@ export async function getCurrentHistory(): Promise<History[]> {
 		humidity.trend = await getMetricTrendByTag(
 			{ ...params, metric: 'humidity' });
 		row.humidity = humidity;
+		
+		// Reachability.
+		row.unreachable = isUnreachable(row);
 		
 		return row;
 	}));
@@ -135,7 +157,7 @@ export async function getCurrentHistory(): Promise<History[]> {
  * Get single min or max value from a metric by tag.
  */
 
-export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, date_end }): Promise<number> {
+export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, date_end }: object): Promise<number> {
 	if (!['min', 'max'].includes(type)) throw new Error("Type needs to be min or max.");
 	if (!date_start || !date_end) throw new Error("Data range must contain start and end date time.");
 	if (date_start > date_end) throw new Error("Start date cannot be before end date.");
@@ -161,7 +183,7 @@ export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, 
  * Get metric trend by tag. Returns 1 for increasing, -1 for decreasing or 0 for staying the same.
  */
 
-export async function getMetricTrendByTag({ tag_id, metric }): Promise<number> {
+export async function getMetricTrendByTag({ tag_id, metric }: object): Promise<number> {
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!metric) throw new Error("Missing metric name.");
 	if (metric && !isValidMetric(metric)) throw new Error("Not a valid metric name: " + metric);

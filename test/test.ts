@@ -1,6 +1,7 @@
 import db from '../src/config/database.ts';
 import http from 'http';
 import fs from 'fs/promises';
+import { addDays, subDays, format } from 'date-fns';
 
 import '../index.ts';
 
@@ -35,7 +36,7 @@ async function testCreateHistory() {
 	await historyModel.saveHistory(
 		{
 			tag_id: 1,
-			datetime: new Date("2020-02-02T02:02:02+02:00"),
+			datetime: subDays(new Date(), 1),
 			temperature: 15.20,
 			humidity: 73.11,
 			battery_low: false
@@ -45,7 +46,7 @@ async function testCreateHistory() {
 	await historyModel.saveHistory(
 		{
 			tag_id: 2,
-			datetime: new Date("2020-02-02T02:02:04+02:00"),
+			datetime: subDays(new Date(), 1),
 			temperature: 1.52,
 			humidity: 80.13,
 			battery_low: false
@@ -55,7 +56,7 @@ async function testCreateHistory() {
 	await historyModel.saveHistory(
 		{
 			tag_id: 2,
-			datetime: new Date("2020-02-01T20:02:04+02:00"),
+			datetime: new Date(),
 			temperature: 1.0361112,
 			humidity: 70.11,
 			battery_low: false
@@ -65,9 +66,19 @@ async function testCreateHistory() {
 	await historyModel.saveHistory(
 		{
 			tag_id: 2,
-			datetime: new Date("2020-02-01T02:02:04+02:00"),
+			datetime: subDays(new Date(), 1),
 			temperature: 1.43,
 			humidity: 100,
+			battery_low: false
+		}
+	);
+	
+	await historyModel.saveHistory(
+		{
+			tag_id: 2,
+			datetime: subDays(new Date(), 1),
+			temperature: 0.00,
+			humidity: 80,
 			battery_low: false
 		}
 	);
@@ -75,7 +86,7 @@ async function testCreateHistory() {
 	await historyModel.saveHistory(
 		{
 			tag_id: 2,
-			datetime: new Date("2020-02-02T23:59:04+02:00"),
+			datetime: new Date(),
 			temperature: 1.571515,
 			humidity: 100,
 			battery_low: true
@@ -85,7 +96,7 @@ async function testCreateHistory() {
 	await historyModel.saveHistory(
 		{
 			tag_id: 3,
-			datetime: new Date("2019-03-01T02:02:04+02:00"),
+			datetime: new Date(),
 			temperature: 25.03,
 			humidity: 1.15151,
 			battery_low: false
@@ -96,9 +107,9 @@ async function testCreateHistory() {
 async function testGetHistory() {
 	console.log("Test getting history of tag 1:");
 	console.log(await historyModel.getHistory({ tag_id: 1 }));
-	console.log("Only 2020-02-02");
+	console.log("Only get yesterday");
 	console.log(await historyModel.getHistory(
-		{ date_start: new Date("2020-01-01"), date_end: new Date("2025-01-01") }
+		{ date_start: subDays(new Date(), 1), date_end: new Date() }
 	));
 }
 
@@ -150,13 +161,13 @@ async function testRuuviGWPaylods() {
 }
 
 async function testGetMinOrMax() {
-	console.log('Test max value: ' + await historyModel.getMinOrMaxValueByTag({ type: 'max', tag_id: 2, metric: 'temperature', date_start: new Date('2020-02-01T00:00:00+02:00'), date_end: new Date('2020-02-03T00:00:00+02:00') })); // 17.2
-	console.log('Test min value: ' + await historyModel.getMinOrMaxValueByTag({ type: 'min', tag_id: 2, metric: 'temperature', date_start: new Date('2020-02-01T00:00:00+02:00'), date_end: new Date('2020-02-03T00:00:00+02:00') })); // 1.43
+	console.log('Test max value: ' + await historyModel.getMinOrMaxValueByTag({ type: 'max', tag_id: 2, metric: 'temperature', date_start: subDays(new Date(), 2), date_end: addDays(new Date(), 2) })); // 17.2
+	console.log('Test min value: ' + await historyModel.getMinOrMaxValueByTag({ type: 'min', tag_id: 2, metric: 'temperature', date_start: subDays(new Date(), 2), date_end: addDays(new Date(), 2) })); // 1.43
 }
 
 async function testAggregateData() {
 	console.log("Test aggregated data");
-	const aggregateDate = new Date('2020-02-02');
+	const aggregateDate = new Date();
 
 	await aggregatedHistoryModel.aggregateHistory(aggregateDate);
 	console.log(await aggregatedHistoryModel.getAggregatedHistory({ tag_id: 2 }));
