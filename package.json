@@ -1,31 +1,32 @@
 {
-  "name": "ruuvi-api",
-  "version": "1.0.0",
-  "description": "App that gets data from Ruuvi gateway and saves it to an SQL database.",
-  "main": "index.ts",
-  "engines": {
-    "node": ">=23.10.0",
-    "npm": ">=10.9.2"
-  },
-  "scripts": {
-    "start": "node index.ts --experimental-transform-types",
-    "test": "node ./test/test.ts --experimental-transform-types"
-  },
-  "author": "Joonas Kokko",
-  "license": "ISC",
-  "type": "module",
-  "dependencies": {
-    "axios": "^1.8.1",
-    "date-fns": "^4.1.0",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "knex": "^3.1.0",
-    "mysql2": "^3.13.0",
-    "node-schedule": "^2.1.1"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.1",
-    "sqlite3": "^5.1.7",
-    "typescript": "^5.8.3"
-  }
+	"name": "ruuvi-api",
+	"version": "1.0.0",
+	"description": "App that gets data from Ruuvi gateway and saves it to an SQL database.",
+	"main": "index.ts",
+	"engines": {
+		"node": ">=23.10.0",
+		"npm": ">=10.9.2"
+	},
+	"scripts": {
+		"start": "node index.ts --experimental-transform-types",
+		"validate": "npx tsc --noEmit",
+		"test": "node ./test/test.ts --experimental-transform-types"
+	},
+	"author": "Joonas Kokko",
+	"license": "ISC",
+	"type": "module",
+	"dependencies": {
+		"axios": "^1.8.1",
+		"date-fns": "^4.1.0",
+		"dotenv": "^16.4.7",
+		"express": "^4.21.2",
+		"knex": "^3.1.0",
+		"mysql2": "^3.13.0",
+		"node-schedule": "^2.1.1"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.1",
+		"sqlite3": "^5.1.7",
+		"typescript": "^5.8.3"
+	}
 }
