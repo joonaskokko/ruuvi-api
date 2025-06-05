@@ -2,7 +2,7 @@ import db from '../config/database.ts';
 import { ensureTag, getTags } from '../models/tagModel.ts';
 import { addDays, subDays, subHours } from 'date-fns';
 
-const METRICS: string[] = [ 'temperature', 'humidity' ];
+const METRICS: string[] = [ 'temperature', 'humidity' ] as const;
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = 12;
 const UNREACHABLE_HOURS: number = 1;
 
@@ -14,7 +14,16 @@ export interface History {
 	humidity?: number;
 	voltage?: number;
 	battery_low?: boolean;
-	unreachable?: boolean;
+}
+
+export interface CurrentHistory {
+	ruuvi_id?: string;
+	tag_id?: number;
+	datetime: Date;
+	temperature?: Metric;
+	humidity?: Metric;
+	voltage?: number;
+	battery_low?: boolean;
 }
 
 export interface Metric {
@@ -74,9 +83,9 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
  */
 
 export async function getHistory({ date_start = null, date_end = null, tag_id = null, limit = null } = {}): Promise<History[]> {
-	const history: object[] = await db('history')
-		.leftJoin('tag', 'tag.id', 'tag_id')
+	const history: History[] = await db('history')
 		.select([ 'history.*', 'tag.name as tag_name' ])
+		.leftJoin('tag', 'tag.id', 'tag_id')
 		.modify(query => {
 			if (date_start) query.where('datetime', '>', date_start);
 			if (date_end) query.where('datetime', '<', date_end);
@@ -92,8 +101,9 @@ export async function getHistory({ date_start = null, date_end = null, tag_id = 
  * Get current history, eg. latest single value per tag.
  */
 
-export async function getCurrentHistory(): Promise<History[]> {
-	let history: object[] = await db('history')
+export async function getCurrentHistory(): Promise<CurrentHistory[]> {
+	let history: CurrentHistory[] = await db('history')
+		.select('history.*', 'tag.name as tag_name')
 		.leftJoin('tag', 'history.tag_id', 'tag.id')
 		.join(
 			db('history')
@@ -101,12 +111,11 @@ export async function getCurrentHistory(): Promise<History[]> {
 				.max('datetime as max_datetime')
 				.groupBy('tag_id')
 			.as('latest'),
-			function () {
+			function() {
 				this.on('history.tag_id', '=', 'latest.tag_id')
 						.andOn('history.datetime', '=', 'latest.max_datetime');
 			}
 		)
-		.select('history.*', 'tag.name as tag_name')
 		.orderBy('tag_name', 'ASC');
 	
 	// Get maximum and minimum last 12 hours.

@@ -28,7 +28,7 @@ export async function run(): Promise<boolean> {
 	await Promise.all(dates_with_data.map(async date => {
 		if (await isDateAggregated({ date })) {
 			console.log("Aggregating day: " + format(date, 'yyyy-MM-dd'));
-			return aggregateHistory(date);
+			return await aggregateHistory(date);
 		}
 	}));
 	

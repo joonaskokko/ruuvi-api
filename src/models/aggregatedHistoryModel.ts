@@ -81,7 +81,7 @@ export async function aggregateHistory(date: Date): Promise<void> {
 export async function saveAggregatedHistory({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max }: AggregatedHistory): Promise<number> {
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!(date instanceof Date)) throw new Error("Invalid date provided.");
-	if (!await isDateAggregated({ tag_id, date })) throw new Error("Aggregated data already exists for this tag and date.");
+	if (await !isDateAggregated({ tag_id, date })) throw new Error("Aggregated data already exists for this tag and date.");
 	
 	const [ id ]: number = await db('history_aggregated').insert({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max });
 	
@@ -94,8 +94,8 @@ export async function saveAggregatedHistory({ tag_id, date, temperature_min, tem
 
 export async function getAggregatedHistory({ tag_id = null, date = null, limit = null } = {}): Promise<AggregatedHistory> {
 	const aggregated_histories: object[] = await db('history_aggregated')
-		.leftJoin('tag', 'tag.id', 'tag_id')
 		.select([ 'history_aggregated.*', 'tag.name as tag_name' ])
+		.leftJoin('tag', 'tag.id', 'tag_id')
 		.modify(query => {
 			if (date) {
 				query.where('date', date );
