@@ -137,7 +137,7 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
  */
 
 export async function isDateAggregated({ tag_id = null, date }): Promise<boolean> {
-	const aggregated_history: AggregatedHistory = await getAggregatedHistory({ tag_id, date });
+	const aggregated_history: AggregatedHistory[] = await getAggregatedHistory({ tag_id, date });
   
 	return aggregated_history.length ? true : false;
 }
