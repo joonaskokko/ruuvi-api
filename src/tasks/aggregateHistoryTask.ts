@@ -26,7 +26,7 @@ export async function run(): Promise<boolean> {
 	// Go through the dates and check if it has aggregation data or not.
 	// If not, aggregate it.
 	await Promise.all(dates_with_data.map(async date => {
-		if (await isDateAggregated({ date })) {
+		if ((await isDateAggregated({ date })) == false) {
 			console.log("Aggregating day: " + format(date, 'yyyy-MM-dd'));
 			return await aggregateHistory(date);
 		}
