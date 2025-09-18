@@ -98,7 +98,7 @@ app.use((err, req: Request, res: Response, next: NextFunction) => {
 // TCP/IP port listening.
 if (SERVER_PORT) {
   app.listen(SERVER_PORT, () => {
-		console.log(`Server running on ${SERVER_PORT}`);
+		console.log(`Server running on port ${SERVER_PORT}`);
   });
 }
 
