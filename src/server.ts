@@ -6,7 +6,8 @@ import { getAggregatedHistory } from './models/aggregatedHistoryModel.ts';
 import { config as loadEnv } from 'dotenv';
 loadEnv();
 
-const { SERVER_PORT } = process.env;
+const { SERVER_PORT, SERVER_SOCKET } = process.env;
+
 const app: Express = express();
 
 app.use(express.json());
@@ -94,6 +95,16 @@ app.use((err, req: Request, res: Response, next: NextFunction) => {
 	res.json({ error: "Something went wrong." });
 });
 
-app.listen(SERVER_PORT, () => {
-	console.log(`Server running on port ${SERVER_PORT}`);
-});
+// TCP/IP port listening.
+if (SERVER_PORT) {
+  app.listen(SERVER_PORT, () => {
+		console.log(`Server running on ${SERVER_PORT}`);
+  });
+}
+
+// Socket listening.
+if (SERVER_SOCKET) {
+  app.listen(SERVER_SOCKET, () => {
+		console.log(`Server running in socket ${SERVER_SOCKET}`);
+  });
+}
