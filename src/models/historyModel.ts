@@ -103,7 +103,14 @@ export async function getHistory({ date_start = null, date_end = null, tag_id = 
 
 export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 	let history: CurrentHistory[] = await db('history')
-		.select('history.*', 'tag.name as tag_name')
+		.select(
+			'history.tag_id',
+			'tag.name as tag_name',
+			'history.datetime',
+			'history.temperature',
+			'history.humidity',
+			'history.battery_low'
+		)
 		.leftJoin('tag', 'history.tag_id', 'tag.id')
 		.join(
 			db('history')
@@ -121,9 +128,9 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 	// Get maximum and minimum last 12 hours.
 	// Also get trend of temperature and humidity.
 	// Also tag unreachability.
-	history = await Promise.all(history.map(async row => {
-		const tag_id: number = row.tag_id;
-		const date_end: Date = row.datetime;
+	history = await Promise.all(history.map(async tag => {
+		const tag_id: number = tag.tag_id;
+		const date_end: Date = tag.datetime;
 		const date_start: Date = subHours(date_end, CURRENT_HISTORY_MIN_MAX_HOURS);
 		
 		// Same for all function calls.
@@ -133,30 +140,26 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 			date_end
 		};
 		
-		const temperature: Sensor = {};
-		temperature.current = row.temperature;		
-		temperature.min = await getMinOrMaxValueByTag(
-			{ ...params, type: 'min', metric: 'temperature' });
-		temperature.max = await getMinOrMaxValueByTag(
-			{ ...params, type: 'max', metric: 'temperature' });
-		temperature.trend = await getMetricTrendByTag(
-			{ ...params, metric: 'temperature' });
-		row.temperature = temperature;
-				
-		const humidity: Sensor = {};
-		humidity.current = row.humidity;
-		humidity.min = await getMinOrMaxValueByTag(
-			{ ...params, type: 'min', metric: 'humidity' });
-		humidity.max = await getMinOrMaxValueByTag(
-			{ ...params, type: 'max', metric: 'humidity' });
-		humidity.trend = await getMetricTrendByTag(
-			{ ...params, metric: 'humidity' });
-		row.humidity = humidity;
-		
+		// Loop METRICS.
+		for (const metric of METRICS) {
+			const sensor: Sensor = {};
+
+			sensor.current = tag[sensor];
+			sensor.min = await getMinOrMaxValueByTag(
+				{ ...params, type: 'min', metric: metric });
+			sensor.max = await getMinOrMaxValueByTag(
+				{ ...params, type: 'max', metric: metric });
+			sensor.trend = await getMetricTrendByTag(
+				{ ...params, metric: 'temperature' });
+
+			// Assign metric to the tag.
+			tag[metric] = sensor;
+		}
+
 		// Reachability.
-		row.unreachable = isUnreachable(row);
+		tag.unreachable = isUnreachable(tag);
 		
-		return row;
+		return tag;
 	}));
 	
 	return history;
@@ -206,7 +209,7 @@ export async function getMetricTrendByTag({ tag_id, metric }: object): Promise<n
 	}
 	
 	// Flatten the array to only values without keys.
-	const [ first, second, third ]: number = metric_values.map(row => row[metric]);
+	const [ first, second, third ]: number = metric_values.map(row => row[metric].toFixed(1));
 
 	// Very simple trend comparison.
 	// TODO: Add some sort of tolerance here, eg. 0.05 or something.
