@@ -144,7 +144,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 		for (const metric of METRICS) {
 			const sensor: Sensor = {};
 
-			sensor.current = tag[sensor];
+			sensor.current = tag[metric];
 			sensor.min = await getMinOrMaxValueByTag(
 				{ ...params, type: 'min', metric: metric });
 			sensor.max = await getMinOrMaxValueByTag(
