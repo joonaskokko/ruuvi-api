@@ -150,7 +150,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 			sensor.max = await getMinOrMaxValueByTag(
 				{ ...params, type: 'max', metric: metric });
 			sensor.trend = await getMetricTrendByTag(
-				{ ...params, metric: 'temperature' });
+				{ ...params, metric: metric });
 
 			// Assign metric to the tag.
 			tag[metric] = sensor;
