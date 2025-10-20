@@ -159,6 +159,9 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 		// Reachability.
 		tag.unreachable = isUnreachable(tag);
 		
+		// Temporary fix because it's late and I don't feel like updating the rust client.
+		tag.id = 1;
+		
 		return tag;
 	}));
 	
