@@ -209,6 +209,7 @@ export async function getMetricTrendByTag({ tag_id, metric }: object): Promise<n
 	}
 	
 	// Flatten the array to only values without keys.
+	// Round the values to avoid unnecessary fluctuation when using shorter time intervals.
 	const [ first, second, third ]: number = metric_values.map(row => row[metric].toFixed(1));
 
 	// Very simple trend comparison.
