@@ -2,7 +2,7 @@ import db from '../config/database.ts';
 import { ensureTag, getTags } from '../models/tagModel.ts';
 import { addDays, subDays, subHours } from 'date-fns';
 
-const METRICS: string[] = [ 'temperature', 'humidity' ] as const;
+const SENSORS: string[] = [ 'temperature', 'humidity' ] as const;
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = 12;
 const UNREACHABLE_HOURS: number = 1;
 
@@ -20,13 +20,13 @@ export interface CurrentHistory {
 	ruuvi_id?: string;
 	tag_id?: number;
 	datetime: Date;
-	temperature?: Metric;
-	humidity?: Metric;
+	temperature?: Sensor;
+	humidity?: Sensor;
 	voltage?: number;
 	battery_low?: boolean;
 }
 
-export interface Metric {
+export interface Sensor {
 	current: number,
 	min: number,
 	max: number,
@@ -34,11 +34,11 @@ export interface Metric {
 }
 
 /**
- * Utility function for checking metric validity.
+ * Utility function for checking sensor name validity.
  */
 
-function isValidMetric(metric) {
-	return METRICS.includes(metric);
+function isValidSensorName(sensor_name) {
+	return SENSORS.includes(sensor_name);
 }
 
 /**
@@ -67,8 +67,8 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
 		battery_low = voltage < 2;
 	}
 	
-	// Remove decimals from metric values to something sensible other than 1.18626.
-	// TODO: A loop perhaps from METRICS?
+	// Remove decimals from sensor values to something sensible other than 1.18626.
+	// TODO: A loop perhaps from SENSORS?
 	temperature = Number(temperature.toFixed(2));
 	humidity = Number(humidity.toFixed(2));
 	
@@ -140,20 +140,20 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 			date_end
 		};
 		
-		// Loop METRICS.
-		for (const metric of METRICS) {
+		// Loop SENSORS.
+		for (const sensor_type of SENSORS) {
 			const sensor: Sensor = {};
 
-			sensor.current = tag[metric];
+			sensor.current = tag[sensor_type];
 			sensor.min = await getMinOrMaxValueByTag(
-				{ ...params, type: 'min', metric: metric });
+				{ ...params, type: 'min', sensor: sensor_type });
 			sensor.max = await getMinOrMaxValueByTag(
-				{ ...params, type: 'max', metric: metric });
-			sensor.trend = await getMetricTrendByTag(
-				{ ...params, metric: metric });
+				{ ...params, type: 'max', sensor: sensor_type });
+			sensor.trend = await getSensorTrendByTag(
+				{ ...params, sensor: sensor_type });
 
-			// Assign metric to the tag.
-			tag[metric] = sensor;
+			// Assign sensor to the tag.
+			tag[sensor_type] = sensor;
 		}
 
 		// Reachability.
@@ -166,23 +166,23 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 }
 
 /**
- * Get single min or max value from a metric by tag.
+ * Get single min or max value from a sensor by tag.
  */
 
-export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, date_end }: object): Promise<number> {
+export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, date_end }: object): Promise<number> {
 	if (!['min', 'max'].includes(type)) throw new Error("Type needs to be min or max.");
 	if (!date_start || !date_end) throw new Error("Data range must contain start and end date time.");
 	if (date_start > date_end) throw new Error("Start date cannot be before end date.");
 	if (!tag_id) throw new Error("Missing tag ID.");
-	if (!metric) throw new Error("Missing metric name.");
-	if (metric && !isValidMetric(metric)) throw new Error("Not a valid metric name: " + metric);
+	if (!sensor) throw new Error("Missing sensor name.");
+	if (sensor && !isValidSensorName(sensor)) throw new Error("Not a valid sensor name: " + sensor);
 	
 	// TODO: Maybe refactor this to use getHistory instead?
 	const { value }: number = await db('history')
 		.modify(query => {
 			// For clarity, these are separate rows.
-			if (type === 'min') query.min({ value: metric });
-			if (type === 'max') query.max({ value: metric });
+			if (type === 'min') query.min({ value: sensor });
+			if (type === 'max') query.max({ value: sensor });
 		})
 		.where('tag_id', tag_id)
 		.whereBetween('datetime', [ date_start, date_end ])
@@ -192,25 +192,25 @@ export async function getMinOrMaxValueByTag({ type, tag_id, metric, date_start, 
 }
 
 /**
- * Get metric trend by tag. Returns 1 for increasing, -1 for decreasing or 0 for staying the same.
+ * Get sensor value trend by tag. Returns 1 for increasing, -1 for decreasing or 0 for staying the same.
  */
 
-export async function getMetricTrendByTag({ tag_id, metric }: object): Promise<number> {
+export async function getSensorTrendByTag({ tag_id, sensor }: object): Promise<number> {
 	if (!tag_id) throw new Error("Missing tag ID.");
-	if (!metric) throw new Error("Missing metric name.");
-	if (metric && !isValidMetric(metric)) throw new Error("Not a valid metric name: " + metric);
+	if (!sensor) throw new Error("Missing sensor name.");
+	if (sensor && !isValidSensorName(sensor)) throw new Error("Not a valid sensor name: " + sensor);
 		
 	// Get history and limit it to 3.
-	const metric_values: History[] = await getHistory({ tag_id, limit: 3 })
+	const sensor_values: History[] = await getHistory({ tag_id, limit: 3 })
 	
 	// If there isn't enough history, return 0 eg. staying the same.
-	if (metric_values.length < 3) {
+	if (sensor_values.length < 3) {
 		return 0;
 	}
 	
 	// Flatten the array to only values without keys.
 	// Round the values to avoid unnecessary fluctuation when using shorter time intervals.
-	const [ first, second, third ]: number = metric_values.map(row => row[metric].toFixed(1));
+	const [ first, second, third ]: number = sensor_values.map(row => row[sensor].toFixed(1));
 
 	// Very simple trend comparison.
 	if (first > second && second > third) {

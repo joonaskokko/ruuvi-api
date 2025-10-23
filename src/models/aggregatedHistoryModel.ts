@@ -45,15 +45,16 @@ export async function aggregateHistory(date: Date): Promise<void> {
 				date
 			};
 			
-			// Fetch the min and max values for each tag
+			// Fetch the min and max values for each tag.
+			// TODO: Loop sensors.
 			aggregated_history.temperature_min = await getMinOrMaxValueByTag(
-				{ ...params, type: 'min', metric: 'temperature' });
+				{ ...params, type: 'min', sensor: 'temperature' });
 			aggregated_history.temperature_max = await getMinOrMaxValueByTag(
-				{ ...params, type: 'max', metric: 'temperature' });
+				{ ...params, type: 'max', sensor: 'temperature' });
 			aggregated_history.humidity_min = await getMinOrMaxValueByTag(
-				{ ...params, type: 'min', metric: 'humidity' });
+				{ ...params, type: 'min', sensor: 'humidity' });
 			aggregated_history.humidity_max = await getMinOrMaxValueByTag(
-				{ ...params, type: 'max', metric: 'humidity' });
+				{ ...params, type: 'max', sensor: 'humidity' });
 			
 			return aggregated_history;
 		}));
@@ -111,7 +112,7 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 		// Format date to Y-m-d.
 		aggregated_history.date = format(aggregated_history.date, 'yyyy-MM-dd');
 		
-		// Format metrics.
+		// Format sensors.
 		aggregated_history.temperature = {
 			min: aggregated_history.temperature_min,
 			max: aggregated_history.temperature_min

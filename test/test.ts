@@ -161,8 +161,8 @@ async function testRuuviGWPaylods() {
 }
 
 async function testGetMinOrMax() {
-	console.log('Test max value: ' + await historyModel.getMinOrMaxValueByTag({ type: 'max', tag_id: 2, metric: 'temperature', date_start: subDays(new Date(), 2), date_end: addDays(new Date(), 2) })); // 17.2
-	console.log('Test min value: ' + await historyModel.getMinOrMaxValueByTag({ type: 'min', tag_id: 2, metric: 'temperature', date_start: subDays(new Date(), 2), date_end: addDays(new Date(), 2) })); // 1.43
+	console.log('Test max value: ' + await historyModel.getMinOrMaxValueByTag({ type: 'max', tag_id: 2, sensor: 'temperature', date_start: subDays(new Date(), 2), date_end: addDays(new Date(), 2) })); // 17.2
+	console.log('Test min value: ' + await historyModel.getMinOrMaxValueByTag({ type: 'min', tag_id: 2, sensor: 'temperature', date_start: subDays(new Date(), 2), date_end: addDays(new Date(), 2) })); // 1.43
 }
 
 async function testAggregateData() {
@@ -177,7 +177,7 @@ async function testAggregateData() {
 
 async function testHistoryTrend() {
 	console.log("Testing trend: ");
-	console.log(await historyModel.getMetricTrendByTag({ tag_id: 2, metric: 'temperature' }))
+	console.log(await historyModel.getSensorTrendByTag({ tag_id: 2, sensor: 'temperature' }))
 }
 
 async function testAggregateHistoryTask() {
