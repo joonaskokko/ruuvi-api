@@ -212,7 +212,6 @@ export async function getMetricTrendByTag({ tag_id, metric }: object): Promise<n
 	const [ first, second, third ]: number = metric_values.map(row => row[metric].toFixed(1));
 
 	// Very simple trend comparison.
-	// TODO: Add some sort of tolerance here, eg. 0.05 or something.
 	if (first > second && second > third) {
 		return 1;
 	}
