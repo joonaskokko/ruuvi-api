@@ -1,37 +1,11 @@
 import db from '../config/database.ts';
 import { ensureTag, getTags } from '../models/tagModel.ts';
 import { addDays, subDays, subHours } from 'date-fns';
+import type { History, CurrentHistory, Sensor } from '../types/types.ts';
 
 const SENSORS: string[] = [ 'temperature', 'humidity' ] as const;
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = 12;
 const UNREACHABLE_HOURS: number = 1;
-
-export interface History {
-	ruuvi_id?: string;
-	tag_id?: number;
-	datetime: Date;
-	temperature?: number;
-	humidity?: number;
-	voltage?: number;
-	battery_low?: boolean;
-}
-
-export interface CurrentHistory {
-	ruuvi_id?: string;
-	tag_id?: number;
-	datetime: Date;
-	temperature?: Sensor;
-	humidity?: Sensor;
-	voltage?: number;
-	battery_low?: boolean;
-}
-
-export interface Sensor {
-	current: number,
-	min: number,
-	max: number,
-	trend: number
-}
 
 /**
  * Utility function for checking sensor name validity.
@@ -53,7 +27,7 @@ function isUnreachable(tag) {
  * Save history entry to the database.
  */
 
-export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, humidity, voltage, battery_low = false }: object): Promise<number> {
+export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, humidity, voltage, battery_low = false }: History): Promise<number> {
 	if (!tag_id && !ruuvi_id) throw new Error("Need either tag ID or Ruuvi ID.");
 	if (!(datetime instanceof Date)) throw new Error("Datetime isn't a date object.");
 	
@@ -73,7 +47,7 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
 	humidity = Number(humidity.toFixed(2));
 	
 	// Insert into history. Use tag ID here instead of Ruuvi ID.
-	const [ id ]: number = await db('history').insert({ tag_id, datetime, temperature, humidity, battery_low });
+	const [ id ]: number[] = await db('history').insert({ tag_id, datetime, temperature, humidity, battery_low });
 
 	return id;
 }
@@ -142,7 +116,8 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 		
 		// Loop SENSORS.
 		for (const sensor_type of SENSORS) {
-			const sensor: Sensor = {};
+			// Trust me bro, this will be a sensor.
+			const sensor = {} as Sensor;
 
 			sensor.current = tag[sensor_type];
 			sensor.min = await getMinOrMaxValueByTag(
@@ -169,7 +144,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
  * Get single min or max value from a sensor by tag.
  */
 
-export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, date_end }: object): Promise<number> {
+export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, date_end }: {type: string; tag_id: number; sensor: string; date_start: Date; date_end: Date}): Promise<number> {
 	if (!['min', 'max'].includes(type)) throw new Error("Type needs to be min or max.");
 	if (!date_start || !date_end) throw new Error("Data range must contain start and end date time.");
 	if (date_start > date_end) throw new Error("Start date cannot be before end date.");
@@ -178,7 +153,7 @@ export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, 
 	if (sensor && !isValidSensorName(sensor)) throw new Error("Not a valid sensor name: " + sensor);
 	
 	// TODO: Maybe refactor this to use getHistory instead?
-	const { value }: number = await db('history')
+	const { value }: { value: number } = await db('history')
 		.modify(query => {
 			// For clarity, these are separate rows.
 			if (type === 'min') query.min({ value: sensor });
@@ -195,7 +170,7 @@ export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, 
  * Get sensor value trend by tag. Returns 1 for increasing, -1 for decreasing or 0 for staying the same.
  */
 
-export async function getSensorTrendByTag({ tag_id, sensor }: object): Promise<number> {
+export async function getSensorTrendByTag({ tag_id, sensor }: { tag_id: number; sensor: string }): Promise<number> {
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!sensor) throw new Error("Missing sensor name.");
 	if (sensor && !isValidSensorName(sensor)) throw new Error("Not a valid sensor name: " + sensor);
@@ -210,7 +185,7 @@ export async function getSensorTrendByTag({ tag_id, sensor }: object): Promise<n
 	
 	// Flatten the array to only values without keys.
 	// Round the values to avoid unnecessary fluctuation when using shorter time intervals.
-	const [ first, second, third ]: number = sensor_values.map(row => row[sensor].toFixed(1));
+	const [ first, second, third ]: number[] = sensor_values.map(row => Number(row[sensor].toFixed(1)));
 
 	// Very simple trend comparison.
 	if (first > second && second > third) {

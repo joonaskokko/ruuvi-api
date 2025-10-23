@@ -1,10 +1,5 @@
 import db from '../config/database.ts';
-
-export interface Tag {
-	id?: number;
-	ruuvi_id?: string;
-	name?: string;
-}
+import type { Tag } from '../types/types.ts';
 
 /**
  * Get all tags.
@@ -47,7 +42,7 @@ export async function getTagByRuuviId(ruuvi_id: string): Promise<Tag> {
 export async function insertTag({ ruuvi_id, name }: Tag): Promise<number> {
 	if (!ruuvi_id) throw new Error("Missing Ruuvi ID.");
 	
-	const [ id ]: number = await db('tag').insert({ ruuvi_id, name });
+	const [ id ]: number[] = await db('tag').insert({ ruuvi_id, name });
 	
 	return id;
 }

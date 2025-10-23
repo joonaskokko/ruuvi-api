@@ -1,5 +1,5 @@
 // Create tables if they don't exist'
-export default async function installSchema(db: object): void {
+export default async function installSchema(db): Promise<void> {
 	console.log("Ensuring database schema...");
 
 	if (!(await db.schema.hasTable('tag'))) {

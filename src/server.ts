@@ -19,10 +19,12 @@ app.post('/history', async (req: Request, res: Response, next: NextFunction) => 
 		
 		// This is Ruuvi GW's test call in the wizard.
 		if (typeof tags === 'object' && Object.keys(tags).length === 0) {
-			return res.status(200).json({ message: 'Connection working without tag data.'});
+			res.status(200).json({ message: 'Connection working without tag data.'});
+			return;
 		}
 		else if (!tags || typeof tags !== 'object') {
-			return res.status(400).json({ error: 'Invalid ruuvi-gateway payload' });
+			res.status(400).json({ error: 'Invalid ruuvi-gateway payload' });
+			return;
 		}
 		
 		// Tag data is a single object with Ruuvi ID as key.
@@ -37,7 +39,8 @@ app.post('/history', async (req: Request, res: Response, next: NextFunction) => 
 		}));
 
 		if (!historyEntries.length) {
-			return res.status(400).json({ error: 'No valid history entries' });
+			res.status(400).json({ error: 'No valid history entries' });
+			return;
 		}
 
 		// Save each history entry

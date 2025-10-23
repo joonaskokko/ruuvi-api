@@ -1,5 +1,5 @@
 import { aggregateHistory, isDateAggregated } from '../models/aggregatedHistoryModel.ts';
-import type { History } from '../models/historyModel.ts';
+import type { History } from '../types/types.ts';
 import { getHistory } from '../models/historyModel.ts';
 import { isEqual, format } from 'date-fns';
 
