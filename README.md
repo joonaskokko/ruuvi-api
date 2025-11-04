@@ -4,17 +4,12 @@ Simple headless Ruuvi sensor API for saving Ruuvi sensor data to a database. A r
 
 Install
 -------
-
 `$ npm install`
 
-Use ENV variables as you please:
+Configuration
+-------------
+Check `.env.defaults` for default ENV variables. Create your own `.env` or `.env.production` (or whichever `NODE_ENV` value are you using).
 
-```
-DB_HOST="127.0.0.1"
-DB_USER=""
-DB_PASSWORD=""
-DB_NAME="ruuvi"
-SERVER_PORT="8080"
-```
+Note that the service can be ran in port mode or socket mode OR both. Empty the variables you don't want to use.
 
 Start with `$ npm start`. First time running will create the database table schema.

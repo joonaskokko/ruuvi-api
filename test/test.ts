@@ -219,4 +219,4 @@ await testGetAggregatedDataFromServer();
 
 await testCleanHistoryTask();
 
-process.exit();
+process.exit(0);

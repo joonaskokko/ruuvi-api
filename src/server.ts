@@ -108,3 +108,8 @@ if (SERVER_SOCKET) {
 		console.log(`Server running in socket ${SERVER_SOCKET}`);
   });
 }
+
+if (!SERVER_PORT || SERVER_SOCKET) {
+	console.log("No server TCP/IP port or socket set. Exiting.");
+	process.exit(0);
+}
