@@ -4,7 +4,7 @@
 	"description": "App that gets data from Ruuvi gateway and saves it to an SQL database.",
 	"main": "start.ts",
 	"engines": {
-		"node": ">=23.11.1",
+		"node": ">=25.1.0",
 		"npm": ">=11.6.2"
 	},
 	"scripts": {
