@@ -16,7 +16,6 @@
 	"license": "ISC",
 	"type": "module",
 	"dependencies": {
-		"axios": "^1.12.0",
 		"date-fns": "^4.1.0",
 		"dotenv-flow": "^4.1.0",
 		"express": "^4.21.2",
