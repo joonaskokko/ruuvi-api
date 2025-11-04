@@ -3,9 +3,6 @@ import type { Express, Request, Response, NextFunction } from 'express';
 import { saveHistory, getHistory, getCurrentHistory } from './models/historyModel.ts';
 import { getAggregatedHistory } from './models/aggregatedHistoryModel.ts';
 
-import { config as loadEnv } from 'dotenv';
-loadEnv();
-
 const { SERVER_PORT, SERVER_SOCKET } = process.env;
 
 const app: Express = express();

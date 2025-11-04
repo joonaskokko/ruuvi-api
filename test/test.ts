@@ -1,9 +1,8 @@
+import '../start.ts';
 import db from '../src/config/database.ts';
 import http from 'http';
 import fs from 'fs/promises';
 import { addDays, subDays, format } from 'date-fns';
-
-import '../index.ts';
 
 import * as tagModel from '../src/models/tagModel.ts';
 import * as historyModel from '../src/models/historyModel.ts';
@@ -11,7 +10,7 @@ import * as aggregatedHistoryModel from '../src/models/aggregatedHistoryModel.ts
 import * as cleanHistoryTask from '../src/tasks/cleanHistoryTask.ts';
 import * as aggregateHistoryTask from '../src/tasks/aggregateHistoryTask.ts';
 
-const url = 'http://localhost:8080';
+const url = 'http://127.0.0.1:8080';
 
 async function testCreateTags() {
 	console.log("Creating tags:");

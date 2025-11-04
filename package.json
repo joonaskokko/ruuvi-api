@@ -2,15 +2,15 @@
 	"name": "ruuvi-api",
 	"version": "1.0.0",
 	"description": "App that gets data from Ruuvi gateway and saves it to an SQL database.",
-	"main": "index.ts",
+	"main": "start.ts",
 	"engines": {
-		"node": ">=23.10.0",
-		"npm": ">=10.9.2"
+		"node": ">=25.1.0",
+		"npm": ">=11.6.2"
 	},
 	"scripts": {
-		"start": "node index.ts --experimental-transform-types",
+		"start": "node --import dotenv-flow/config start.ts --experimental-transform-types",
 		"validate": "npx tsc --noEmit",
-		"test": "node ./test/test.ts --experimental-transform-types"
+		"test": "node --import dotenv-flow/config ./test/test.ts --experimental-transform-types"
 	},
 	"author": "Joonas Kokko",
 	"license": "ISC",
@@ -18,7 +18,7 @@
 	"dependencies": {
 		"axios": "^1.12.0",
 		"date-fns": "^4.1.0",
-		"dotenv": "^16.4.7",
+		"dotenv-flow": "^4.1.0",
 		"express": "^4.21.2",
 		"knex": "^3.1.0",
 		"mysql2": "^3.13.0",
