@@ -9,7 +9,8 @@ const {
 	NODE_ENV
 } = process.env;
 
-const config = {
+// This needs to be 'any' for later editing.
+let config: any = {
 	client: 'mysql2',
 	connection: {
 		host: DB_HOST,

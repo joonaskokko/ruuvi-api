@@ -4,7 +4,8 @@ import { addDays, subDays, subHours } from 'date-fns';
 import type { History, CurrentHistory, Sensor } from '../types/types.ts';
 
 const SENSORS: string[] = [ 'temperature', 'humidity' ] as const;
-const { CURRENT_HISTORY_MIN_MAX_HOURS, UNREACHABLE_HOURS } = process.env;
+const CURRENT_HISTORY_MIN_MAX_HOURS: number = Number(process.env.CURRENT_HISTORY_MIN_MAX_HOURS);
+const UNREACHABLE_HOURS: number = Number(process.env.UNREACHABLE_HOURS);
 
 /**
  * Utility function for checking sensor name validity.
