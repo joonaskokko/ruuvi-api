@@ -1,5 +1,6 @@
 import express from 'express';
 import type { Express, Request, Response, NextFunction } from 'express';
+import type { HistoryFilters } from './types.ts';
 import { saveHistory, getHistory, getCurrentHistory } from './models/historyModel.ts';
 import { getAggregatedHistory } from './models/aggregatedHistoryModel.ts';
 
@@ -52,8 +53,15 @@ app.post('/history', async (req: Request, res: Response, next: NextFunction) => 
 
 // GET /history - Fetch history data
 app.get('/history', async (req: Request, res: Response, next: NextFunction) => {
+	const filters: HistoryFilters = {
+		tag_id: req.query.tag_id ? Number(req.query.tag_id) : null,
+		date_start: req.query.date_start ? new Date(req.query.date_start as string) : null,
+		date_end: req.query.date_end ? new Date(req.query.date_end as string) : null,
+		limit: req.query.limit ? Number(req.query.limit) : null
+	};
+	
 	try {
-		const records = await getHistory();
+		const records = await getHistory(filters);
 		res.json(records);
 	}
 	catch (error) {

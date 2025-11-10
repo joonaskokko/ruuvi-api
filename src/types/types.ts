@@ -8,6 +8,12 @@ export interface History {
 	battery_low?: boolean;
 }
 
+export interface HistoryFilters {
+	date_start?: Date | null;
+	date_end?: Date | null;
+	tag_id?: number | null;
+	limit?: number | null;
+}
 export interface CurrentHistory {
 	ruuvi_id?: string;
 	tag_id?: number;

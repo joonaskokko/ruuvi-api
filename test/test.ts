@@ -121,6 +121,15 @@ async function testGetHistoryFromServer() {
 	);
 }
 
+async function testGetHistoryFiltersFromServer() {
+	console.log("Get server history with filters:");
+	await fetch(url + '/history?tag_id=2')
+		.then(response => response.json())
+		.then(data => console.log(data))
+		.catch(error => console.error('Error:', error)
+	);
+}
+
 async function testCurrentHistoryFromServer() {
 	console.log("Get server current history:");
 	await fetch(url + '/current')
@@ -208,6 +217,7 @@ await testGetTags();
 await testCreateHistory();
 await testGetHistory();
 await testGetHistoryFromServer();
+await testGetHistoryFiltersFromServer();
 await testCurrentHistoryFromServer();
 await testRuuviGWPaylods();
 await testGetMinOrMax();

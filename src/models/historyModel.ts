@@ -1,7 +1,7 @@
 import db from '../config/database.ts';
 import { ensureTag, getTags } from '../models/tagModel.ts';
 import { addDays, subDays, subHours } from 'date-fns';
-import type { History, CurrentHistory, Sensor } from '../types/types.ts';
+import type { History, HistoryFilters, CurrentHistory, Sensor } from '../types/types.ts';
 
 const SENSORS: string[] = [ 'temperature', 'humidity' ] as const;
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = Number(process.env.CURRENT_HISTORY_MIN_MAX_HOURS);
@@ -56,7 +56,7 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
  * Get history.
  */
 
-export async function getHistory({ date_start = null, date_end = null, tag_id = null, limit = null } = {}): Promise<History[]> {
+export async function getHistory({ date_start = null, date_end = null, tag_id = null, limit = null }: HistoryFilters = {}): Promise<History[]> {
 	const history: History[] = await db('history')
 		.select([ 'history.*', 'tag.name as tag_name' ])
 		.leftJoin('tag', 'tag.id', 'tag_id')
