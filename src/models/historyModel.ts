@@ -184,8 +184,8 @@ export async function getSensorTrendByTag({ tag_id, sensor }: { tag_id: number; 
 	}
 	
 	// Flatten the array to only values without keys.
-	// Round the values to avoid unnecessary fluctuation when using shorter time intervals.
-	const [ first, second, third ]: number[] = sensor_values.map(row => Number(row[sensor].toFixed(1)));
+	// TODO: This still needs better trend handling due to random fluctuation.
+	const [ first, second, third ]: number[] = sensor_values.map(row => row[sensor]);
 
 	// Very simple trend comparison.
 	if (first > second && second > third) {
