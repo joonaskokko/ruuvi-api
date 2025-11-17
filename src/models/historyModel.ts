@@ -176,17 +176,18 @@ export async function getSensorTrendByTag({ tag_id, sensor }: { tag_id: number; 
 	if (!sensor) throw new Error("Missing sensor name.");
 	if (sensor && !isValidSensorName(sensor)) throw new Error("Not a valid sensor name: " + sensor);
 		
-	// Get history and limit it to 3.
-	const sensor_values: History[] = await getHistory({ tag_id, limit: 3 })
+	// Get history and limit it to 6.
+	const sensor_values: History[] = await getHistory({ tag_id, limit: 6 })
 	
 	// If there isn't enough history, return 0 eg. staying the same.
-	if (sensor_values.length < 3) {
+	if (sensor_values.length < 6) {
 		return 0;
 	}
 	
 	// Flatten the array to only values without keys.
 	// TODO: This still needs better trend handling due to random fluctuation.
-	const [ first, second, third ]: number[] = sensor_values.map(row => row[sensor]);
+	// Skip over every each from the results to give the trend more space.
+	const [ first, , second, , third ]: number[] = sensor_values.map(row => row[sensor]);
 
 	// Very simple trend comparison.
 	if (first > second && second > third) {
