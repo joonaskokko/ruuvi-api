@@ -6,6 +6,7 @@ import type { History, HistoryFilters, CurrentHistory, Sensor } from '../types/t
 const SENSORS: string[] = [ 'temperature', 'humidity' ] as const;
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = Number(process.env.CURRENT_HISTORY_MIN_MAX_HOURS);
 const UNREACHABLE_HOURS: number = Number(process.env.UNREACHABLE_HOURS);
+const LOW_BATTERY_VOLTAGE: number = Number(process.env.LOW_BATTERY_VOLTAGE);
 
 /**
  * Utility function for checking sensor name validity.
@@ -38,7 +39,7 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
 	
 	// Set battery low based on voltage. Note: overrides battery_low.
 	if (voltage) {
-		battery_low = voltage < 2;
+		battery_low = voltage < LOW_BATTERY_VOLTAGE;
 	}
 	
 	// Remove decimals from sensor values to something sensible other than 1.18626.
