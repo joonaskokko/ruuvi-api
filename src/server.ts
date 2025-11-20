@@ -1,6 +1,6 @@
 import express from 'express';
 import type { Express, Request, Response, NextFunction } from 'express';
-import type { HistoryFilters } from './types.ts';
+import type { HistoryFilters } from './types/types.ts';
 import { saveHistory, getHistory, getCurrentHistory } from './models/historyModel.ts';
 import { getAggregatedHistory } from './models/aggregatedHistoryModel.ts';
 
