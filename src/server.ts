@@ -1,8 +1,8 @@
 import express from 'express';
 import type { Express, Request, Response, NextFunction } from 'express';
 import type { HistoryFilters } from './types/types.ts';
-import { saveHistory, getHistory, getCurrentHistory } from './models/historyModel.ts';
-import { getAggregatedHistory } from './models/aggregatedHistoryModel.ts';
+import { saveHistory, getHistory, getCurrentHistory } from './services/historyService.ts';
+import { getAggregatedHistory } from './services/aggregatedHistoryService.ts';
 
 const { SERVER_PORT, SERVER_SOCKET } = process.env;
 

@@ -1,4 +1,4 @@
-import { cleanOldHistory } from '../models/historyModel.ts';
+import { cleanOldHistory } from '../services/historyService.ts';
 import { subDays, format } from 'date-fns';
 
 const DAYS_TO_CLEAN = 7;

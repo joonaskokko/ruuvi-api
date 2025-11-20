@@ -1,6 +1,6 @@
-import { aggregateHistory, isDateAggregated } from '../models/aggregatedHistoryModel.ts';
+import { aggregateHistory, isDateAggregated } from '../services/aggregatedHistoryService.ts';
 import type { History } from '../types/types.ts';
-import { getHistory } from '../models/historyModel.ts';
+import { getHistory } from '../services/historyService.ts';
 import { isEqual, format } from 'date-fns';
 
 export async function run(): Promise<boolean> {

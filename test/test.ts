@@ -4,9 +4,9 @@ import http from 'http';
 import fs from 'fs/promises';
 import { addDays, subDays, format } from 'date-fns';
 
-import * as tagModel from '../src/models/tagModel.ts';
-import * as historyModel from '../src/models/historyModel.ts';
-import * as aggregatedHistoryModel from '../src/models/aggregatedHistoryModel.ts';
+import * as tagModel from '../src/services/tagService.ts';
+import * as historyModel from '../src/services/historyService.ts';
+import * as aggregatedHistoryModel from '../src/services/aggregatedHistoryService.ts';
 import * as cleanHistoryTask from '../src/tasks/cleanHistoryTask.ts';
 import * as aggregateHistoryTask from '../src/tasks/aggregateHistoryTask.ts';
 
