@@ -6,20 +6,20 @@ import { isEqual, format } from 'date-fns';
 export async function run(): Promise<boolean> {
 	const date_end: Date = new Date();
 	date_end.setHours(0, 0, 0, 0); // Set to beginning of today.
-	
+
 	// Get complete days where we don't have aggregated data.
 	const history: History[] = await getHistory({ date_end });
-	
+
 	const dates_with_data: Date[] = history.reduce((dates, { datetime }) => {
 		const date: Date = new Date(datetime);
 		// Normalise to midnight.
 		date.setHours(0, 0, 0, 0);
-		
+
 		// Because Date objects don't support direct comparison, this needs to be done.
 		if (!dates.some(existing_date => isEqual(existing_date, date))) {
 			dates.push(date);
 		}
-		
+
 		return dates;
 	}, []);
 
@@ -31,6 +31,6 @@ export async function run(): Promise<boolean> {
 			return await aggregateHistory(date);
 		}
 	}));
-	
+
 	return true;
 }

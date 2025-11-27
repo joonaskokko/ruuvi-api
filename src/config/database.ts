@@ -35,16 +35,16 @@ config.postProcessResponse = (result) => {
 		if ('datetime' in row && row.datetime !== null) {
 			row.datetime = new Date(row.datetime);
 		}
-		
+
 		if ('date' in row && row.date !== null) {
 			row.date = new Date(row.date);
 		}
-		
+
 		// Convert battery low from tinyint to boolean because MySQL ynnyms.
 		if ('battery_low' in row && row.battery_low !== null) {
 			row.battery_low = Boolean(row.battery_low);
 		}
-	
+
 		return row;
 	};
 

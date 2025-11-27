@@ -51,7 +51,7 @@ async function testCreateHistory() {
 			battery_low: false
 		}
 	);
-	
+
 	await historyModel.saveHistory(
 		{
 			tag_id: 2,
@@ -71,7 +71,7 @@ async function testCreateHistory() {
 			battery_low: false
 		}
 	);
-	
+
 	await historyModel.saveHistory(
 		{
 			tag_id: 2,
@@ -199,7 +199,7 @@ async function testGetAggregatedDataFromServer() {
 		.then(data => console.log(data))
 		.catch(error => console.error('Error:', error)
 	);
-	
+
 	console.log("Get server aggregated data with tag ID 2:");
 	await fetch(url + '/history_aggregated?tag=2')
 		.then(response => response.json())

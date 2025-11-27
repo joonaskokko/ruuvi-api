@@ -31,12 +31,12 @@ export async function aggregateHistory(date: Date): Promise<void> {
 				date_start,
 				date_end
 			};
-			
+
 			const aggregated_history = {
 				tag_id: tag.id,
 				date
 			} as AggregatedHistory;
-			
+
 			// Fetch the min and max values for each tag.
 			// TODO: Loop sensors.
 			aggregated_history.temperature_min = await getMinOrMaxValueByTag(
@@ -47,10 +47,10 @@ export async function aggregateHistory(date: Date): Promise<void> {
 				{ ...params, type: 'min', sensor: 'humidity' });
 			aggregated_history.humidity_max = await getMinOrMaxValueByTag(
 				{ ...params, type: 'max', sensor: 'humidity' });
-			
+
 			return aggregated_history;
 		}));
-	
+
 	// Filter out entries where all values are null.
 	// We might have tags that don't have any data. This will remove them.
 	aggregated_histories = aggregated_histories.filter(
@@ -75,9 +75,9 @@ export async function saveAggregatedHistory({ tag_id, date, temperature_min, tem
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!(date instanceof Date)) throw new Error("Invalid date provided.");
 	if (await isDateAggregated({ tag_id, date })) throw new Error("Aggregated data already exists for this tag and date.");
-	
+
 	const [ id ]: number[] = await db('history_aggregated').insert({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max });
-	
+
 	return id;
 }
 
@@ -93,35 +93,35 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 			if (date) {
 				query.where('date', date );
 			}
-		
+
 			if (tag_id) query.where('tag_id', tag_id);
 			if (limit) query.limit(limit);
 		})
 		.orderBy('history_aggregated.date', 'DESC');
-	
+
 	// Additional formatting.
 	aggregated_histories.forEach((aggregated_history) => {
 		// Format date to Y-m-d.
 		aggregated_history.date = format(aggregated_history.date, 'yyyy-MM-dd');
-		
+
 		// Format sensors.
 		aggregated_history.temperature = {
 			min: aggregated_history.temperature_min,
 			max: aggregated_history.temperature_min
 		};
-		
+
 		delete aggregated_history.temperature_min;
 		delete aggregated_history.temperature_max;
-		
+
 		aggregated_history.humidity = {
 			min: aggregated_history.humidity_min,
 			max: aggregated_history.humidity_min
 		};
-		
+
 		delete aggregated_history.humidity_min;
 		delete aggregated_history.humidity_max;
 	});
-	
+
 	return aggregated_histories;
 }
 
@@ -131,6 +131,6 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 
 export async function isDateAggregated({ tag_id = null, date }): Promise<boolean> {
 	const aggregated_history: AggregatedHistory[] = await getAggregatedHistory({ tag_id, date });
-  
+
 	return aggregated_history.length ? true : false;
 }

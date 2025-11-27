@@ -31,22 +31,22 @@ function isUnreachable(tag) {
 export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, humidity, voltage, battery_low = false }: History): Promise<number> {
 	if (!tag_id && !ruuvi_id) throw new Error("Need either tag ID or Ruuvi ID.");
 	if (!(datetime instanceof Date)) throw new Error("Datetime isn't a date object.");
-	
+
 	// Get tag ID for Ruuvi MAC if tag ID isn't passed.
 	if (!tag_id && ruuvi_id) {
 		tag_id = (await ensureTag({ ruuvi_id })).id;
 	}
-	
+
 	// Set battery low based on voltage. Note: overrides battery_low.
 	if (voltage) {
 		battery_low = voltage < LOW_BATTERY_VOLTAGE;
 	}
-	
+
 	// Remove decimals from sensor values to something sensible other than 1.18626.
 	// TODO: A loop perhaps from SENSORS?
 	temperature = Number(temperature.toFixed(2));
 	humidity = Number(humidity.toFixed(2));
-	
+
 	// Insert into history. Use tag ID here instead of Ruuvi ID.
 	const [ id ]: number[] = await db('history').insert({ tag_id, datetime, temperature, humidity, battery_low });
 
@@ -68,7 +68,7 @@ export async function getHistory({ date_start = null, date_end = null, tag_id = 
 			if (limit) query.limit(limit);
 		})
 		.orderBy('history.datetime', 'DESC');
-	
+
 	return history;
 }
 
@@ -99,7 +99,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 			}
 		)
 		.orderBy('tag_name', 'ASC');
-	
+
 	// Get maximum and minimum last 12 hours.
 	// Also get trend of temperature and humidity.
 	// Also tag unreachability.
@@ -107,14 +107,14 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 		const tag_id: number = tag.tag_id;
 		const date_end: Date = tag.datetime;
 		const date_start: Date = subHours(date_end, CURRENT_HISTORY_MIN_MAX_HOURS);
-		
+
 		// Same for all function calls.
 		const params = {
 			tag_id,
 			date_start,
 			date_end
 		};
-		
+
 		// Loop SENSORS.
 		for (const sensor_type of SENSORS) {
 			// Trust me bro, this will be a sensor.
@@ -134,10 +134,10 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 
 		// Reachability.
 		tag.unreachable = isUnreachable(tag);
-		
+
 		return tag;
 	}));
-	
+
 	return history;
 }
 
@@ -152,7 +152,7 @@ export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, 
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!sensor) throw new Error("Missing sensor name.");
 	if (sensor && !isValidSensorName(sensor)) throw new Error("Not a valid sensor name: " + sensor);
-	
+
 	// TODO: Maybe refactor this to use getHistory instead?
 	const { value }: { value: number } = await db('history')
 		.modify(query => {
@@ -163,7 +163,7 @@ export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, 
 		.where('tag_id', tag_id)
 		.whereBetween('datetime', [ date_start, date_end ])
 		.first();
-	
+
 	return value;
 }
 
@@ -175,15 +175,15 @@ export async function getSensorTrendByTag({ tag_id, sensor }: { tag_id: number; 
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!sensor) throw new Error("Missing sensor name.");
 	if (sensor && !isValidSensorName(sensor)) throw new Error("Not a valid sensor name: " + sensor);
-		
+
 	// Get history and limit it to 6.
 	const sensor_values: History[] = await getHistory({ tag_id, limit: 6 })
-	
+
 	// If there isn't enough history, return 0 eg. staying the same.
 	if (sensor_values.length < 6) {
 		return 0;
 	}
-	
+
 	// Flatten the array to only values without keys.
 	// TODO: This still needs better trend handling due to random fluctuation.
 	// Skip over every each from the results to give the trend more space.
@@ -208,10 +208,10 @@ export async function getSensorTrendByTag({ tag_id, sensor }: { tag_id: number; 
 export async function cleanOldHistory(delete_older_than_days: Date): Promise<number> {
 	if (!(delete_older_than_days instanceof Date)) throw new Error("Clean older than date isn't a date object.");
 	if (delete_older_than_days > new Date()) throw new Error("Date cannot be in the future.");
-	
+
 	const rows_removed: number = await db('history')
 		.where('datetime', '<', delete_older_than_days)
 		.del();
-	
+
 	return rows_removed;
 }

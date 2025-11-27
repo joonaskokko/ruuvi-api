@@ -9,6 +9,6 @@ export async function run(): Promise<boolean> {
 	console.log("Cleaning entries older than " + format(clean_date, 'yyyy-MM-dd'));
 	const rows_cleaned: number = await cleanOldHistory(clean_date);
 	console.log("Deleted " + rows_cleaned + " entries.");
-	
+
 	return true;
 }

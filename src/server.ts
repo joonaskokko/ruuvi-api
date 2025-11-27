@@ -14,7 +14,7 @@ app.use(express.json());
 app.post('/history', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { tags } = req.body?.data;
-		
+
 		// This is Ruuvi GW's test call in the wizard.
 		if (typeof tags === 'object' && Object.keys(tags).length === 0) {
 			res.status(200).json({ message: 'Connection working without tag data.'});
@@ -24,7 +24,7 @@ app.post('/history', async (req: Request, res: Response, next: NextFunction) => 
 			res.status(400).json({ error: 'Invalid ruuvi-gateway payload' });
 			return;
 		}
-		
+
 		// Tag data is a single object with Ruuvi ID as key.
 		// Need to loop them with Object.values().
 		const historyEntries = Object.values(tags)
@@ -59,7 +59,7 @@ app.get('/history', async (req: Request, res: Response, next: NextFunction) => {
 		date_end: req.query.date_end ? new Date(req.query.date_end as string) : null,
 		limit: req.query.limit ? Number(req.query.limit) : null
 	};
-	
+
 	try {
 		const records = await getHistory(filters);
 		res.json(records);
@@ -87,9 +87,9 @@ app.get('/history_aggregated', async (req: Request, res: Response, next: NextFun
 		const records = await getAggregatedHistory(
 		{
 			tag_id: tag ?? null,
-			date: date ?? null 
+			date: date ?? null
 		});
-		
+
 		res.json(records);
 	}
 	catch (error) {
