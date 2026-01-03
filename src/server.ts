@@ -103,21 +103,25 @@ app.use((err, req: Request, res: Response, next: NextFunction) => {
 	res.json({ error: "Something went wrong." });
 });
 
-// TCP/IP port listening.
-if (SERVER_PORT) {
-  app.listen(SERVER_PORT, () => {
-		console.log(`Server running on port ${SERVER_PORT}`);
-  });
-}
 
-// Socket listening.
-if (SERVER_SOCKET) {
-  app.listen(SERVER_SOCKET, () => {
-		console.log(`Server running in socket ${SERVER_SOCKET}`);
-  });
-}
+// Server port or socket needs to be defined.
+// They can also both be which is fine.
+if (SERVER_PORT || SERVER_SOCKET) {
+	// TCP/IP port listening.
+	if (SERVER_PORT) {
+	  app.listen(SERVER_PORT, () => {
+			console.log(`Server running on port ${SERVER_PORT}`);
+	  });
+	}
 
-if (!SERVER_PORT && !SERVER_SOCKET) {
-	console.log("No server TCP/IP port or socket set. Exiting.");
-	process.exit(0);
+	// Socket listening.
+	if (SERVER_SOCKET) {
+	  app.listen(SERVER_SOCKET, () => {
+			console.log(`Server running in socket ${SERVER_SOCKET}`);
+	  });
+	}
+}
+else {
+	console.error("No server TCP/IP port or socket set. Exiting.");
+	process.exit(1);
 }
