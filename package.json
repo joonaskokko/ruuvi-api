@@ -10,7 +10,8 @@
 	"scripts": {
 		"start": "node --import dotenv-flow/config start.ts --experimental-transform-types",
 		"validate": "npx tsc --noEmit",
-		"test": "node --import dotenv-flow/config ./test/test.ts --experimental-transform-types"
+		"dev-test": "node --import dotenv-flow/config ./test/test.ts --experimental-transform-types",
+		"test": "NODE_ENV=test node --import dotenv-flow/config --test 'test/**/*.test.ts' --experimental-transform-types --experimental-test-coverage"
 	},
 	"author": "Joonas Kokko",
 	"license": "ISC",
