@@ -21,7 +21,7 @@ let config: any = {
 };
 
 if (NODE_ENV === 'test') {
-	config.client = 'sqlite3';
+	config.client = 'better-sqlite3';
 	config.connection = { filename: ':memory:' };
 	config.useNullAsDefault = true;
 }
