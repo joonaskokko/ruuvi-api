@@ -9,3 +9,4 @@ npm-debug.log*
 # Bölö
 .DS_Store
 node_modules
+dist/

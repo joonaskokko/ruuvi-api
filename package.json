@@ -9,7 +9,9 @@
 	},
 	"scripts": {
 		"start": "node --import dotenv-flow/config start.ts --experimental-transform-types",
+		"start-bundle": "node --import dotenv-flow/config ./dist/start.mjs",
 		"validate": "npx tsc --noEmit",
+		"build": "node esbuild.mjs",
 		"dev-test": "node --import dotenv-flow/config ./test/test.ts --experimental-transform-types",
 		"test": "NODE_ENV=test node --import dotenv-flow/config --test 'test/**/*.test.ts' --experimental-transform-types --experimental-test-coverage"
 	},
@@ -19,6 +21,7 @@
 	"dependencies": {
 		"date-fns": "^4.1.0",
 		"dotenv-flow": "^4.1.0",
+		"esbuild": "^0.27.3",
 		"express": "^4.22.1",
 		"knex": "^3.1.0",
 		"mysql2": "^3.13.0",
