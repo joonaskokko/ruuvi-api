@@ -6,10 +6,7 @@ import type { Tag } from '../types/types.ts';
  */
 
 export async function getTags(active = true): Promise<Tag[]> {
-	const tags: object[] = await db('tag')
-	.modify(query => {
-		if (active === false) query.where('active', false);
-	});
+	const tags: object[] = await db('tag').where('active', active);
 
 	return tags;
 }
