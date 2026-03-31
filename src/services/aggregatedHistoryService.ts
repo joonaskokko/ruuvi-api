@@ -1,7 +1,7 @@
 import db from '../config/database.ts';
 import { getMinOrMaxValueByTag } from '../services/historyService.ts';
 import { getTags } from '../services/tagService.ts';
-import { addDays, subDays, subHours, format } from 'date-fns';
+import { addDays, subDays, subHours } from 'date-fns';
 import type { AggregatedHistory, AggregatedHistoryRow, AggregatedSensor, History } from '../types/types.ts';
 
 /**
@@ -103,7 +103,7 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 	const aggregated_histories: AggregatedHistory[] = aggregated_histories_rows.map((row) => {
 		return {
 			tag_id: row.tag_id,
-			date: format(row.date, 'yyyy-MM-dd'),
+			date: row.date,
 			temperature: {
 				min: row.temperature_min,
 				max: row.temperature_max

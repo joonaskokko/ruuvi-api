@@ -10,6 +10,16 @@ const app: Express = express();
 
 app.use(express.json());
 
+// Custom JSON replacer to handle field type conversions.
+app.set('json replacer', (key: string, value: any) => {
+	// Convert dates to strings.
+	if (value instanceof Date) {
+		return value.toISOString();
+	}
+
+	return value;
+});
+
 // POST /history - Save history data
 app.post('/history', async (req: Request, res: Response, next: NextFunction) => {
 	try {

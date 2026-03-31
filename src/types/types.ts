@@ -35,10 +35,10 @@ export interface AggregatedHistoryRow {
 	humidity_max?: number;
 }
 
-// Formatted response with Sensor objects (date can be string after API formatting)
+// Formatted response with Sensor objects
 export interface AggregatedHistory {
 	tag_id: number;
-	date: Date | string;
+	date: Date;
 	temperature_min?: number;
 	temperature_max?: number;
 	temperature?: AggregatedSensor;
