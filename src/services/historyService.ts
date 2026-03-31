@@ -61,6 +61,7 @@ export async function getHistory({ date_start = null, date_end = null, tag_id = 
 	const history: History[] = await db('history')
 		.select([ 'history.*', 'tag.name as tag_name' ])
 		.leftJoin('tag', 'tag.id', 'tag_id')
+		.where('tag.active', true)
 		.modify(query => {
 			if (date_start) query.where('datetime', '>', date_start);
 			if (date_end) query.where('datetime', '<', date_end);
@@ -98,6 +99,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 						.andOn('history.datetime', '=', 'latest.max_datetime');
 			}
 		)
+		.where('tag.active', true)
 		.orderBy('tag_name', 'ASC');
 
 	// Get maximum and minimum last 12 hours.
