@@ -501,4 +501,75 @@ test('History Service', async (t) => {
 		assert.strictEqual(remainingHistory.length, 1);
 		assert.ok(remainingHistory[0].datetime > subDays(now, 2));
 	});
+
+	await t.test('getHistory - excludes inactive tags', async () => {
+		const activeTag = await tagService.ensureTag({ ruuvi_id: '11:22:33:44:55:66', name: 'Active Tag' });
+		const inactiveTag = await tagService.ensureTag({ ruuvi_id: '22:33:44:55:66:77', name: 'Inactive Tag' });
+		const now = new Date();
+
+		await historyService.saveHistory({
+			tag_id: activeTag.id,
+			datetime: now,
+			temperature: 20.0,
+			humidity: 55.0
+		});
+
+		await historyService.saveHistory({
+			tag_id: inactiveTag.id,
+			datetime: now,
+			temperature: 25.0,
+			humidity: 60.0
+		});
+
+		await db('tag').where('id', inactiveTag.id).update({ active: false });
+
+		const history = await historyService.getHistory();
+		assert.strictEqual(history.length, 1);
+		assert.strictEqual(history[0].tag_id, activeTag.id);
+		assert.ok(!history.some(h => h.tag_id === inactiveTag.id));
+	});
+
+	await t.test('getHistory - excludes inactive tags with tag_id filter', async () => {
+		const inactiveTag = await tagService.ensureTag({ ruuvi_id: '11:22:33:44:55:66', name: 'Inactive Tag' });
+		const now = new Date();
+
+		await historyService.saveHistory({
+			tag_id: inactiveTag.id,
+			datetime: now,
+			temperature: 20.0,
+			humidity: 55.0
+		});
+
+		await db('tag').where('id', inactiveTag.id).update({ active: false });
+
+		const history = await historyService.getHistory({ tag_id: inactiveTag.id });
+		assert.strictEqual(history.length, 0);
+	});
+
+	await t.test('getCurrentHistory - excludes inactive tags', async () => {
+		const activeTag = await tagService.ensureTag({ ruuvi_id: '11:22:33:44:55:66', name: 'Active Tag' });
+		const inactiveTag = await tagService.ensureTag({ ruuvi_id: '22:33:44:55:66:77', name: 'Inactive Tag' });
+		const now = new Date();
+
+		await historyService.saveHistory({
+			tag_id: activeTag.id,
+			datetime: now,
+			temperature: 20.0,
+			humidity: 55.0
+		});
+
+		await historyService.saveHistory({
+			tag_id: inactiveTag.id,
+			datetime: now,
+			temperature: 25.0,
+			humidity: 60.0
+		});
+
+		await db('tag').where('id', inactiveTag.id).update({ active: false });
+
+		const currentHistory = await historyService.getCurrentHistory();
+		assert.strictEqual(currentHistory.length, 1);
+		assert.strictEqual(currentHistory[0].tag_id, activeTag.id);
+		assert.ok(!currentHistory.some(h => h.tag_id === inactiveTag.id));
+	});
 });

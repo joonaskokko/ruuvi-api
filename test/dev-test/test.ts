@@ -1,14 +1,14 @@
-import '../start.ts';
-import db from '../src/config/database.ts';
+import '../../start.ts';
+import db from '../../src/config/database.ts';
 import http from 'http';
 import fs from 'fs/promises';
 import { addDays, subDays, format } from 'date-fns';
 
-import * as tagModel from '../src/services/tagService.ts';
-import * as historyModel from '../src/services/historyService.ts';
-import * as aggregatedHistoryModel from '../src/services/aggregatedHistoryService.ts';
-import * as cleanHistoryTask from '../src/tasks/cleanHistoryTask.ts';
-import * as aggregateHistoryTask from '../src/tasks/aggregateHistoryTask.ts';
+import * as tagModel from '../../src/services/tagService.ts';
+import * as historyModel from '../../src/services/historyService.ts';
+import * as aggregatedHistoryModel from '../../src/services/aggregatedHistoryService.ts';
+import * as cleanHistoryTask from '../../src/tasks/cleanHistoryTask.ts';
+import * as aggregateHistoryTask from '../../src/tasks/aggregateHistoryTask.ts';
 
 const url = 'http://127.0.0.1:8080';
 

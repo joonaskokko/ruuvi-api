@@ -8,6 +8,7 @@ export default async function installSchema(db): Promise<void> {
 			table.increments('id').unsigned().primary();
 			table.string('ruuvi_id', 32).nullable();
 			table.string('name', 64).nullable();
+			table.boolean('active').nullable().defaultTo(true);
 		});
 	}
 
