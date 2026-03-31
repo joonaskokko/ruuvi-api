@@ -45,6 +45,11 @@ config.postProcessResponse = (result) => {
 			row.battery_low = Boolean(row.battery_low);
 		}
 
+		// Convert active from tinyint to boolean because of MySQL ynnyms.
+		if ('active' in row && row.active !== null) {
+			row.active = Boolean(row.active);
+		}
+
 		return row;
 	};
 
