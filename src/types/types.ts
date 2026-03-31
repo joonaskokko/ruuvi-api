@@ -1,9 +1,9 @@
 export interface History {
-	ruuvi_id?: string;
 	tag_id?: number;
 	datetime: Date;
 	temperature?: number;
 	humidity?: number;
+	ruuvi_id?: string;
 	voltage?: number;
 	battery_low?: boolean;
 }
@@ -14,35 +14,49 @@ export interface HistoryFilters {
 	tag_id?: number | null;
 	limit?: number | null;
 }
+
 export interface CurrentHistory {
-	ruuvi_id?: string;
-	tag_id?: number;
-	tag_name?: string;
+	tag_id: number;
 	datetime: Date;
+	tag_name?: string;
 	temperature?: Sensor;
 	humidity?: Sensor;
 	battery_low?: boolean;
-	unreachable?: boolean;
+	unreachable: boolean;
 }
 
-// FIXME: I know this is wrong but this interface includes both flat DB row and formatted object (with child sensors).
-// FIXME: Sometimes the date is an object and sometimes a formatted Y-m-d string due to displaying it in the API.
+// DB row format with raw min/max values
+export interface AggregatedHistoryRow {
+	tag_id: number;
+	date: Date;
+	temperature_min?: number;
+	temperature_max?: number;
+	humidity_min?: number;
+	humidity_max?: number;
+}
+
+// Formatted response with Sensor objects (date can be string after API formatting)
 export interface AggregatedHistory {
-	tag_id: number,
-	date: Date|string,
-	temperature?: Sensor,
-	temperature_min?: number,
-	temperature_max?: number,
-	humidity?: Sensor,
-	humidity_min?: number,
-	humidity_max?: number
+	tag_id: number;
+	date: Date | string;
+	temperature_min?: number;
+	temperature_max?: number;
+	temperature?: AggregatedSensor;
+	humidity_min?: number;
+	humidity_max?: number;
+	humidity?: AggregatedSensor;
 }
 
 export interface Sensor {
-	current?: number,
-	min: number,
-	max: number,
-	trend?: number
+	current: number;
+	min: number;
+	max: number;
+	trend?: number;
+}
+
+export interface AggregatedSensor {
+	min: number;
+	max: number;
 }
 
 export interface Tag {
