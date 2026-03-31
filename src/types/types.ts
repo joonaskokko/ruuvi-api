@@ -17,6 +17,7 @@ export interface HistoryFilters {
 export interface CurrentHistory {
 	ruuvi_id?: string;
 	tag_id?: number;
+	tag_name?: string;
 	datetime: Date;
 	temperature?: Sensor;
 	humidity?: Sensor;

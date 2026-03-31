@@ -86,8 +86,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 		const tag_id: number = tag.id;
 
 		// Get the latest history entry for this tag.
-		// We might get undefined in case of an empty array.
-		const [ latestHistory ]: History | undefined = (await getHistory({ tag_id, limit: 1 }));
+		const latestHistory: History | undefined = (await getHistory({ tag_id, limit: 1 })).at(0);
 
 		// Skip processing if no history available for this tag.
 		if (!latestHistory) {
@@ -130,7 +129,9 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 		} satisfies CurrentHistory;
 	})))
 	// Filter out empty values, eg. tags without data that will be empty objects.
-	.filter(Boolean);
+	.filter(Boolean)
+	// Sort by tag name alphabetically.
+	.sort((a, b) => (a.tag_name || '').localeCompare(b.tag_name || ''));
 
 	return history;
 }
