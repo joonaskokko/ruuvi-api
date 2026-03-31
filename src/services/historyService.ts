@@ -78,36 +78,23 @@ export async function getHistory({ date_start = null, date_end = null, tag_id = 
  */
 
 export async function getCurrentHistory(): Promise<CurrentHistory[]> {
-	let history: CurrentHistory[] = await db('history')
-		.select(
-			'history.tag_id',
-			'tag.name as tag_name',
-			'history.datetime',
-			'history.temperature',
-			'history.humidity',
-			'history.battery_low'
-		)
-		.leftJoin('tag', 'history.tag_id', 'tag.id')
-		.join(
-			db('history')
-				.select('tag_id')
-				.max('datetime as max_datetime')
-				.groupBy('tag_id')
-			.as('latest'),
-			function() {
-				this.on('history.tag_id', '=', 'latest.tag_id')
-						.andOn('history.datetime', '=', 'latest.max_datetime');
-			}
-		)
-		.where('tag.active', true)
-		.orderBy('tag_name', 'ASC');
+	// Get all available tags.
+	const tags = await getTags();
 
-	// Get maximum and minimum last 12 hours.
-	// Also get trend of temperature and humidity.
-	// Also tag unreachability.
-	history = await Promise.all(history.map(async tag => {
-		const tag_id: number = tag.tag_id;
-		const date_end: Date = tag.datetime;
+	// Get the latest history entry for each tag and enrich with min/max values. Form the final object and return it.
+	const history: CurrentHistory[] = (await Promise.all(tags.map(async tag => {
+		const tag_id: number = tag.id;
+
+		// Get the latest history entry for this tag.
+		// We might get undefined in case of an empty array.
+		const [ latestHistory ]: History | undefined = (await getHistory({ tag_id, limit: 1 }));
+
+		// Skip processing if no history available for this tag.
+		if (!latestHistory) {
+			return;
+		}
+
+		const date_end: Date = latestHistory.datetime;
 		const date_start: Date = subHours(date_end, CURRENT_HISTORY_MIN_MAX_HOURS);
 
 		// Same for all function calls.
@@ -117,28 +104,33 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 			date_end
 		};
 
-		// Loop SENSORS.
+		// Enrich each sensor with min/max/trend values within 12 hours.
+		const sensors: Record<string, Sensor> = {};
 		for (const sensor_type of SENSORS) {
-			// Trust me bro, this will be a sensor.
-			const sensor = {} as Sensor;
-
-			sensor.current = tag[sensor_type];
-			sensor.min = await getMinOrMaxValueByTag(
-				{ ...params, type: 'min', sensor: sensor_type });
-			sensor.max = await getMinOrMaxValueByTag(
-				{ ...params, type: 'max', sensor: sensor_type });
-			sensor.trend = await getSensorTrendByTag(
-				{ ...params, sensor: sensor_type });
-
-			// Assign sensor to the tag.
-			tag[sensor_type] = sensor;
+			sensors[sensor_type] = {
+				current: latestHistory[sensor_type],
+				min: await getMinOrMaxValueByTag(
+					{ ...params, type: 'min', sensor: sensor_type }),
+				max: await getMinOrMaxValueByTag(
+					{ ...params, type: 'max', sensor: sensor_type }),
+				trend: await getSensorTrendByTag(
+					{ ...params, sensor: sensor_type })
+			};
 		}
 
-		// Reachability.
-		tag.unreachable = isUnreachable(tag);
-
-		return tag;
-	}));
+		// Form the final object.
+		return {
+			tag_id,
+			tag_name: tag.name,
+			datetime: latestHistory.datetime,
+			temperature: sensors.temperature,
+			humidity: sensors.humidity,
+			battery_low: latestHistory.battery_low,
+			unreachable: isUnreachable(latestHistory)
+		} satisfies CurrentHistory;
+	})))
+	// Filter out empty values, eg. tags without data that will be empty objects.
+	.filter(Boolean);
 
 	return history;
 }
