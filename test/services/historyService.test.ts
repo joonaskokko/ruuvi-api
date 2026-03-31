@@ -572,4 +572,22 @@ test('History Service', async (t) => {
 		assert.strictEqual(currentHistory[0].tag_id, activeTag.id);
 		assert.ok(!currentHistory.some(h => h.tag_id === inactiveTag.id));
 	});
+
+	await t.test('getCurrentHistory - skips tags without history', async () => {
+		const tagWithHistory = await tagService.ensureTag({ ruuvi_id: '11:22:33:44:55:66', name: 'Tag With History' });
+		const tagWithoutHistory = await tagService.ensureTag({ ruuvi_id: '22:33:44:55:66:77', name: 'Tag Without History' });
+		const now = new Date();
+
+		await historyService.saveHistory({
+			tag_id: tagWithHistory.id,
+			datetime: now,
+			temperature: 20.0,
+			humidity: 55.0
+		});
+
+		const currentHistory = await historyService.getCurrentHistory();
+		assert.strictEqual(currentHistory.length, 1);
+		assert.strictEqual(currentHistory[0].tag_id, tagWithHistory.id);
+		assert.ok(!currentHistory.some(h => h.tag_id === tagWithoutHistory.id));
+	});
 });
