@@ -216,7 +216,7 @@ test('Aggregated History Service', async (t) => {
 
 		const aggregated = await aggregatedHistoryService.getAggregatedHistory({ date: date1 });
 		assert.ok(aggregated.length >= 1);
-		assert.ok(aggregated.every(a => a.date.includes(date1.getFullYear().toString())));
+		assert.ok(aggregated.every(a => a.date instanceof Date && a.date.toDateString() === date1.toDateString()));
 	});
 
 	await t.test('getAggregatedHistory - respects limit', async () => {

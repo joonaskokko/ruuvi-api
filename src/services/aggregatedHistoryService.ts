@@ -1,8 +1,8 @@
 import db from '../config/database.ts';
 import { getMinOrMaxValueByTag } from '../services/historyService.ts';
 import { getTags } from '../services/tagService.ts';
-import { addDays, subDays, subHours, format } from 'date-fns';
-import type { AggregatedHistory, History } from '../types/types.ts';
+import { addDays, subDays, subHours } from 'date-fns';
+import type { AggregatedHistory, AggregatedHistoryRow, AggregatedSensor, History } from '../types/types.ts';
 
 /**
  * Aggregate history entries for given date.
@@ -24,7 +24,7 @@ export async function aggregateHistory(date: Date): Promise<void> {
 	date_end.setHours(0, 0, 0, 0);
 
 	// Loop through tags and get min/max values for each tag
-	let aggregated_histories: AggregatedHistory[] = await Promise.all(
+	let aggregated_histories: AggregatedHistoryRow[] = await Promise.all(
 		tags.map(async (tag) => {
 			const params = {
 				tag_id: tag.id,
@@ -35,7 +35,7 @@ export async function aggregateHistory(date: Date): Promise<void> {
 			const aggregated_history = {
 				tag_id: tag.id,
 				date
-			} as AggregatedHistory;
+			} as AggregatedHistoryRow;
 
 			// Fetch the min and max values for each tag.
 			// TODO: Loop sensors.
@@ -71,7 +71,7 @@ export async function aggregateHistory(date: Date): Promise<void> {
  * Save aggregated history to the database.
  */
 
-export async function saveAggregatedHistory({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max }: AggregatedHistory): Promise<number> {
+export async function saveAggregatedHistory({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max }: AggregatedHistoryRow): Promise<number> {
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!(date instanceof Date)) throw new Error("Invalid date provided.");
 	if (await isDateAggregated({ tag_id, date })) throw new Error("Aggregated data already exists for this tag and date.");
@@ -85,8 +85,8 @@ export async function saveAggregatedHistory({ tag_id, date, temperature_min, tem
  * Get aggregated history by tag ID and date.
  */
 
-export async function getAggregatedHistory({ tag_id = null, date = null, limit = null } = {}): Promise<any[]> {
-	const aggregated_histories: AggregatedHistory[] = await db('history_aggregated')
+export async function getAggregatedHistory({ tag_id = null, date = null, limit = null } = {}): Promise<AggregatedHistory[]> {
+	const aggregated_histories_rows: AggregatedHistoryRow[] = await db('history_aggregated')
 		.select([ 'history_aggregated.*', 'tag.name as tag_name' ])
 		.leftJoin('tag', 'tag.id', 'tag_id')
 		.modify(query => {
@@ -99,27 +99,20 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 		})
 		.orderBy('history_aggregated.date', 'DESC');
 
-	// Additional formatting.
-	aggregated_histories.forEach((aggregated_history) => {
-		// Format date to Y-m-d.
-		aggregated_history.date = format(aggregated_history.date, 'yyyy-MM-dd');
-
-		// Format sensors.
-		aggregated_history.temperature = {
-			min: aggregated_history.temperature_min,
-			max: aggregated_history.temperature_min
-		};
-
-		delete aggregated_history.temperature_min;
-		delete aggregated_history.temperature_max;
-
-		aggregated_history.humidity = {
-			min: aggregated_history.humidity_min,
-			max: aggregated_history.humidity_min
-		};
-
-		delete aggregated_history.humidity_min;
-		delete aggregated_history.humidity_max;
+	// Convert from row format to formatted response with Sensor objects.
+	const aggregated_histories: AggregatedHistory[] = aggregated_histories_rows.map((row) => {
+		return {
+			tag_id: row.tag_id,
+			date: row.date,
+			temperature: {
+				min: row.temperature_min,
+				max: row.temperature_max
+			},
+			humidity: {
+				min: row.humidity_min,
+				max: row.humidity_max
+			}
+		} satisfies AggregatedHistory;
 	});
 
 	return aggregated_histories;
