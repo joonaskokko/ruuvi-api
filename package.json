@@ -9,6 +9,7 @@
 	},
 	"scripts": {
 		"start": "node --import dotenv-flow/config start.ts --experimental-transform-types",
+		"start-bun": "bun start.ts --import dotenv-flow/config",
 		"start-bundle": "node --import dotenv-flow/config ./dist/start.mjs",
 		"validate": "npx tsc --noEmit",
 		"build": "node esbuild.mjs",
@@ -29,7 +30,7 @@
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.1",
-		"better-sqlite3": "^12.6.2",
+		"sqlite3": "^6.0.1",
 		"typescript": "^5.8.3"
 	}
 }
