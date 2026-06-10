@@ -20,6 +20,7 @@ export default async function installSchema(db): Promise<void> {
 			table.dateTime('datetime').nullable();
 			table.float('temperature').nullable();
 			table.float('humidity').nullable();
+			table.integer('rssi').nullable();
 			table.boolean('battery_low').nullable();
 
 			table.foreign('tag_id').references('id').inTable('tag').onDelete('NO ACTION').onUpdate('NO ACTION');
@@ -36,6 +37,8 @@ export default async function installSchema(db): Promise<void> {
 			table.float('temperature_max').nullable();
 			table.float('humidity_min').nullable();
 			table.float('humidity_max').nullable();
+			table.integer('rssi_min').nullable();
+			table.integer('rssi_max').nullable();
 
 			table.foreign('tag_id').references('id').inTable('tag').onDelete('NO ACTION').onUpdate('NO ACTION');
 		});

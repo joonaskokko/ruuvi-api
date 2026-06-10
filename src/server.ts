@@ -38,11 +38,12 @@ app.post('/history', async (req: Request, res: Response, next: NextFunction) => 
 		// Tag data is a single object with Ruuvi ID as key.
 		// Need to loop them with Object.values().
 		const historyEntries = Object.values(tags)
-			.map(({ id, timestamp, temperature, humidity, voltage }) => ({
+			.map(({ id, timestamp, temperature, humidity, rssi, voltage }) => ({
 				ruuvi_id: id,
 				datetime: new Date(timestamp * 1000),
 				temperature: temperature,
 				humidity: humidity,
+				rssi: rssi,
 				voltage: voltage
 		}));
 

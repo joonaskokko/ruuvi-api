@@ -3,6 +3,7 @@ export interface History {
 	datetime: Date;
 	temperature?: number;
 	humidity?: number;
+	rssi?: number;
 	ruuvi_id?: string;
 	voltage?: number;
 	battery_low?: boolean;
@@ -21,6 +22,7 @@ export interface CurrentHistory {
 	tag_name?: string;
 	temperature?: Sensor;
 	humidity?: Sensor;
+	rssi?: Sensor;
 	battery_low?: boolean;
 	unreachable: boolean;
 }
@@ -33,6 +35,8 @@ export interface AggregatedHistoryRow {
 	temperature_max?: number;
 	humidity_min?: number;
 	humidity_max?: number;
+	rssi_min?: number;
+	rssi_max?: number;
 }
 
 // Formatted response with Sensor objects
@@ -45,6 +49,10 @@ export interface AggregatedHistory {
 	humidity_min?: number;
 	humidity_max?: number;
 	humidity?: AggregatedSensor;
+	rssi_min?: number;
+	rssi_max?: number;
+	rssi?: AggregatedSensor;
+
 }
 
 export interface Sensor {

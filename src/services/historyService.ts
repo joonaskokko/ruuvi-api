@@ -3,7 +3,7 @@ import { ensureTag, getTags } from '../services/tagService.ts';
 import { addDays, subDays, subHours } from 'date-fns';
 import type { History, HistoryFilters, CurrentHistory, Sensor } from '../types/types.ts';
 
-const SENSORS: string[] = [ 'temperature', 'humidity' ] as const;
+const SENSORS: string[] = [ 'temperature', 'humidity', 'rssi' ] as const;
 const CURRENT_HISTORY_MIN_MAX_HOURS: number = Number(process.env.CURRENT_HISTORY_MIN_MAX_HOURS);
 const UNREACHABLE_HOURS: number = Number(process.env.UNREACHABLE_HOURS);
 const LOW_BATTERY_VOLTAGE: number = Number(process.env.LOW_BATTERY_VOLTAGE);
@@ -28,7 +28,7 @@ function isUnreachable(tag) {
  * Save history entry to the database.
  */
 
-export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, humidity, voltage, battery_low = false }: History): Promise<number> {
+export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, humidity, voltage, rssi, battery_low = false }: History): Promise<number> {
 	if (!tag_id && !ruuvi_id) throw new Error("Need either tag ID or Ruuvi ID.");
 	if (!(datetime instanceof Date)) throw new Error("Datetime isn't a date object.");
 
@@ -48,7 +48,7 @@ export async function saveHistory({ tag_id, ruuvi_id, datetime, temperature, hum
 	humidity = Number(humidity.toFixed(2));
 
 	// Insert into history. Use tag ID here instead of Ruuvi ID.
-	const [ id ]: number[] = await db('history').insert({ tag_id, datetime, temperature, humidity, battery_low });
+	const [ id ]: number[] = await db('history').insert({ tag_id, datetime, temperature, humidity, rssi, battery_low });
 
 	return id;
 }
@@ -124,6 +124,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 			datetime: latestHistory.datetime,
 			temperature: sensors.temperature,
 			humidity: sensors.humidity,
+			rssi: sensors.rssi,
 			battery_low: latestHistory.battery_low,
 			unreachable: isUnreachable(latestHistory)
 		} satisfies CurrentHistory;
