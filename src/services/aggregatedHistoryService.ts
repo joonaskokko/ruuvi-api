@@ -49,7 +49,7 @@ export async function aggregateHistory(date: Date): Promise<void> {
 				{ ...params, type: 'max', sensor: 'humidity' });
 			aggregated_history.rssi_min = await getMinOrMaxValueByTag(
 				{ ...params, type: 'min', sensor: 'rssi' });
-			aggregated_history.rssi_min = await getMinOrMaxValueByTag(
+			aggregated_history.rssi_max = await getMinOrMaxValueByTag(
 				{ ...params, type: 'max', sensor: 'rssi' });
 
 

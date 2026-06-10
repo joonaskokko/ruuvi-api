@@ -76,12 +76,14 @@ test('History Service', async (t) => {
 			datetime: now,
 			temperature: 20.123456,
 			humidity: 55.987654,
+			rssi: -55,
 			battery_low: false
 		});
 
 		const history = await historyService.getHistory({ tag_id: tag.id });
 		assert.strictEqual(history[0].temperature, 20.12);
 		assert.strictEqual(history[0].humidity, 55.99);
+		assert.strictEqual(history[0].rssi, -55);
 	});
 
 	await t.test('saveHistory - sets battery_low based on voltage', async () => {
@@ -351,6 +353,45 @@ test('History Service', async (t) => {
 		});
 
 		assert.strictEqual(min, 45);
+	});
+
+	await t.test('getMinOrMaxValueByTag - returns min rssi', async () => {
+		const tag = await tagService.ensureTag({ ruuvi_id: '11:22:33:44:55:66' });
+		const now = new Date();
+
+		await historyService.saveHistory({
+			tag_id: tag.id,
+			datetime: subDays(now, 2),
+			temperature: 15.0,
+			humidity: 60.0,
+			rssi: -30
+		});
+
+		await historyService.saveHistory({
+			tag_id: tag.id,
+			datetime: subDays(now, 1),
+			temperature: 25.0,
+			humidity: 45.0,
+			rssi: -60
+		});
+
+		await historyService.saveHistory({
+			tag_id: tag.id,
+			datetime: now,
+			temperature: 20.0,
+			humidity: 50.0,
+			rssi: -50
+		});
+
+		const min = await historyService.getMinOrMaxValueByTag({
+			type: 'min',
+			tag_id: tag.id,
+			sensor: 'rssi',
+			date_start: subDays(now, 3),
+			date_end: addDays(now, 1)
+		});
+
+		assert.strictEqual(min, -60);
 	});
 
 	await t.test('getSensorTrendByTag - throws error for missing tag_id', async () => {
