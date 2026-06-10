@@ -2,7 +2,8 @@ import db from '../config/database.ts';
 import { getMinOrMaxValueByTag } from '../services/historyService.ts';
 import { getTags } from '../services/tagService.ts';
 import { addDays, subDays, subHours } from 'date-fns';
-import type { AggregatedHistory, AggregatedHistoryRow, AggregatedSensor, History } from '../types/types.ts';
+import type { AggregatedHistory, AggregatedHistoryRow, AggregatedSensor, History, Sensor } from '../types/types.ts';
+import { SENSORS } from '../config/config.ts';
 
 /**
  * Aggregate history entries for given date.

@@ -1,13 +1,6 @@
 import knex from 'knex';
 import installSchema from './database.schema.ts';
-
-const {
-	DB_HOST,
-	DB_USER,
-	DB_PASSWORD,
-	DB_NAME,
-	NODE_ENV
-} = process.env;
+import { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, NODE_ENV } from './config.ts';
 
 // This needs to be 'any' for later editing.
 let config: any = {
