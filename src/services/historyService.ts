@@ -110,7 +110,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 					{ ...params, type: 'max', sensor: sensor_type }),
 				trend: await getSensorTrendByTag(
 					{ ...params, sensor: sensor_type })
-			};
+			} as Sensor;
 		}
 
 		// Form the final object.
