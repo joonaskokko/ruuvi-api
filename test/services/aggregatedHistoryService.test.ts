@@ -51,13 +51,15 @@ test('Aggregated History Service', async (t) => {
 			tag_id: tag1.id,
 			datetime: subDays(now, 1),
 			temperature: 15.0,
-			humidity: 50.0
+			humidity: 50.0,
+			rssi: -50
 		});
 		await historyService.saveHistory({
 			tag_id: tag1.id,
 			datetime: subDays(now, 1),
 			temperature: 25.0,
-			humidity: 60.0
+			humidity: 60.0,
+			rssi: -30
 		});
 
 		// Add history for tag 2
@@ -65,7 +67,8 @@ test('Aggregated History Service', async (t) => {
 			tag_id: tag2.id,
 			datetime: subDays(now, 1),
 			temperature: 10.0,
-			humidity: 40.0
+			humidity: 40.0,
+			rssi: -40
 		});
 
 		await aggregatedHistoryService.aggregateHistory(subDays(now, 1));
@@ -74,8 +77,8 @@ test('Aggregated History Service', async (t) => {
 		const rawAggregated = await db('history_aggregated').select('*');
 		
 		assert.ok(rawAggregated.length >= 2);
-		assert.ok(rawAggregated.some(a => a.tag_id === tag1.id && a.temperature_min === 15 && a.temperature_max === 25));
-		assert.ok(rawAggregated.some(a => a.tag_id === tag2.id && a.temperature_min === 10 && a.temperature_max === 10));
+		assert.ok(rawAggregated.some(a => a.tag_id === tag1.id && a.temperature_min === 15 && a.temperature_max === 25 && a.rssi_min === -50 && a.rssi_max === -30));
+		assert.ok(rawAggregated.some(a => a.tag_id === tag2.id && a.temperature_min === 10 && a.temperature_max === 10 && a.rssi_min === -40 && a.rssi_max === -40));
 	});
 
 	await t.test('saveAggregatedHistory - saves aggregated history', async () => {

@@ -38,6 +38,7 @@ async function testCreateHistory() {
 			datetime: subDays(new Date(), 1),
 			temperature: 15.20,
 			humidity: 73.11,
+			rssi: -50,
 			battery_low: false
 		}
 	);
@@ -48,6 +49,7 @@ async function testCreateHistory() {
 			datetime: subDays(new Date(), 1),
 			temperature: 1.52,
 			humidity: 80.13,
+			rssi: null,
 			battery_low: false
 		}
 	);
@@ -58,6 +60,7 @@ async function testCreateHistory() {
 			datetime: new Date(),
 			temperature: 1.0361112,
 			humidity: 70.11,
+			rssi: -3,
 			battery_low: false
 		}
 	);
@@ -78,6 +81,7 @@ async function testCreateHistory() {
 			datetime: subDays(new Date(), 1),
 			temperature: 0.00,
 			humidity: 80,
+			rssi: -98,
 			battery_low: false
 		}
 	);
@@ -88,6 +92,7 @@ async function testCreateHistory() {
 			datetime: new Date(),
 			temperature: 1.571515,
 			humidity: 100,
+			rssi: -15,
 			battery_low: true
 		}
 	);
@@ -98,6 +103,7 @@ async function testCreateHistory() {
 			datetime: new Date(),
 			temperature: 25.03,
 			humidity: 1.15151,
+			rssi: -3,
 			battery_low: false
 		}
 	);

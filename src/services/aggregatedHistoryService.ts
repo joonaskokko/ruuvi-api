@@ -47,6 +47,11 @@ export async function aggregateHistory(date: Date): Promise<void> {
 				{ ...params, type: 'min', sensor: 'humidity' });
 			aggregated_history.humidity_max = await getMinOrMaxValueByTag(
 				{ ...params, type: 'max', sensor: 'humidity' });
+			aggregated_history.rssi_min = await getMinOrMaxValueByTag(
+				{ ...params, type: 'min', sensor: 'rssi' });
+			aggregated_history.rssi_max = await getMinOrMaxValueByTag(
+				{ ...params, type: 'max', sensor: 'rssi' });
+
 
 			return aggregated_history;
 		}));
@@ -54,11 +59,13 @@ export async function aggregateHistory(date: Date): Promise<void> {
 	// Filter out entries where all values are null.
 	// We might have tags that don't have any data. This will remove them.
 	aggregated_histories = aggregated_histories.filter(
-		({ temperature_min, temperature_max, humidity_min, humidity_max }) =>
+		({ temperature_min, temperature_max, humidity_min, humidity_max, rssi_min, rssi_max }) =>
 			temperature_min !== null ||
 			temperature_max !== null ||
 			humidity_min !== null ||
-			humidity_max !== null
+			humidity_max !== null ||
+			rssi_min !== null ||
+			rssi_max !== null
 	);
 
 	// Save the aggregated results.
@@ -71,12 +78,12 @@ export async function aggregateHistory(date: Date): Promise<void> {
  * Save aggregated history to the database.
  */
 
-export async function saveAggregatedHistory({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max }: AggregatedHistoryRow): Promise<number> {
+export async function saveAggregatedHistory({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max, rssi_min, rssi_max }: AggregatedHistoryRow): Promise<number> {
 	if (!tag_id) throw new Error("Missing tag ID.");
 	if (!(date instanceof Date)) throw new Error("Invalid date provided.");
 	if (await isDateAggregated({ tag_id, date })) throw new Error("Aggregated data already exists for this tag and date.");
 
-	const [ id ]: number[] = await db('history_aggregated').insert({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max });
+	const [ id ]: number[] = await db('history_aggregated').insert({ tag_id, date, temperature_min, temperature_max, humidity_min, humidity_max, rssi_min, rssi_max });
 
 	return id;
 }
@@ -111,6 +118,10 @@ export async function getAggregatedHistory({ tag_id = null, date = null, limit =
 			humidity: {
 				min: row.humidity_min,
 				max: row.humidity_max
+			},
+			rssi: {
+				min: row.rssi_min,
+				max: row.rssi_max
 			}
 		} satisfies AggregatedHistory;
 	});
