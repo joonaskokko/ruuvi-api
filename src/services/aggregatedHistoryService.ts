@@ -2,7 +2,8 @@ import db from '../config/database.ts';
 import { getMinOrMaxValueByTag } from '../services/historyService.ts';
 import { getTags } from '../services/tagService.ts';
 import { addDays, subDays, subHours } from 'date-fns';
-import type { AggregatedHistory, AggregatedHistoryRow, AggregatedSensor, History } from '../types/types.ts';
+import type { AggregatedHistory, AggregatedHistoryRow, AggregatedSensor, History, Sensor } from '../types/types.ts';
+import { SENSORS } from '../config/config.ts';
 
 /**
  * Aggregate history entries for given date.
@@ -37,21 +38,14 @@ export async function aggregateHistory(date: Date): Promise<void> {
 				date
 			} as AggregatedHistoryRow;
 
-			// Fetch the min and max values for each tag.
-			// TODO: Loop sensors.
-			aggregated_history.temperature_min = await getMinOrMaxValueByTag(
-				{ ...params, type: 'min', sensor: 'temperature' });
-			aggregated_history.temperature_max = await getMinOrMaxValueByTag(
-				{ ...params, type: 'max', sensor: 'temperature' });
-			aggregated_history.humidity_min = await getMinOrMaxValueByTag(
-				{ ...params, type: 'min', sensor: 'humidity' });
-			aggregated_history.humidity_max = await getMinOrMaxValueByTag(
-				{ ...params, type: 'max', sensor: 'humidity' });
-			aggregated_history.rssi_min = await getMinOrMaxValueByTag(
-				{ ...params, type: 'min', sensor: 'rssi' });
-			aggregated_history.rssi_max = await getMinOrMaxValueByTag(
-				{ ...params, type: 'max', sensor: 'rssi' });
-
+			// Fetch the min and max values for each sensor.
+			// It's a bit ugly to use variables in key names but oh well.'
+			for (const sensor_name of SENSORS) {
+				aggregated_history[`${sensor_name}_min`] = await getMinOrMaxValueByTag(
+				{ ...params, type: 'min', sensor: sensor_name });
+				aggregated_history[`${sensor_name}_max`] = await getMinOrMaxValueByTag(
+				{ ...params, type: 'max', sensor: sensor_name });
+			}
 
 			return aggregated_history;
 		}));

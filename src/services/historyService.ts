@@ -1,12 +1,8 @@
 import db from '../config/database.ts';
 import { ensureTag, getTags } from '../services/tagService.ts';
 import { addDays, subDays, subHours } from 'date-fns';
+import { SENSORS, UNREACHABLE_HOURS, CURRENT_HISTORY_MIN_MAX_HOURS, LOW_BATTERY_VOLTAGE } from '../config/config.ts';
 import type { History, HistoryFilters, CurrentHistory, Sensor } from '../types/types.ts';
-
-const SENSORS: string[] = [ 'temperature', 'humidity', 'rssi' ] as const;
-const CURRENT_HISTORY_MIN_MAX_HOURS: number = Number(process.env.CURRENT_HISTORY_MIN_MAX_HOURS);
-const UNREACHABLE_HOURS: number = Number(process.env.UNREACHABLE_HOURS);
-const LOW_BATTERY_VOLTAGE: number = Number(process.env.LOW_BATTERY_VOLTAGE);
 
 /**
  * Utility function for checking sensor name validity.
@@ -114,7 +110,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
 					{ ...params, type: 'max', sensor: sensor_type }),
 				trend: await getSensorTrendByTag(
 					{ ...params, sensor: sensor_type })
-			};
+			} as Sensor;
 		}
 
 		// Form the final object.
