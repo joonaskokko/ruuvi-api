@@ -141,7 +141,7 @@ export async function getCurrentHistory(): Promise<CurrentHistory[]> {
  * Get single min or max value from a sensor by tag.
  */
 
-export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, date_end }: {type: string; tag_id: number; sensor: string; date_start: Date; date_end: Date}): Promise<number> {
+export async function getMinOrMaxValueByTag({ type, tag_id, sensor, date_start, date_end }: {type: string; tag_id: number; sensor: string; date_start: Date; date_end: Date}): Promise<number|null> {
 	if (!['min', 'max'].includes(type)) throw new Error("Type needs to be min or max.");
 	if (!date_start || !date_end) throw new Error("Data range must contain start and end date time.");
 	if (date_start > date_end) throw new Error("Start date cannot be before end date.");
