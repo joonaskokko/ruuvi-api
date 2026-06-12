@@ -81,6 +81,29 @@ test('Aggregated History Service', async (t) => {
 		assert.ok(rawAggregated.some(a => a.tag_id === tag2.id && a.temperature_min === 10 && a.temperature_max === 10 && a.rssi_min === -40 && a.rssi_max === -40));
 	});
 
+	// New test: ensure aggregation handles NULL sensor values correctly
+	await t.test('aggregateHistory - handles NULL sensor values', async () => {
+		const tagNull1 = await tagService.ensureTag({ ruuvi_id: '33:44:55:66:77:88', name: 'Tag Null 1' });
+		const tagNull2 = await tagService.ensureTag({ ruuvi_id: '33:44:55:66:77:99', name: 'Tag Null 2' });
+		const now = new Date();
+		const date = subDays(now, 1);
+
+		// Insert rows directly to allow NULL sensor values (bypassing saveHistory which enforces numbers)
+		await db('history').insert({ tag_id: tagNull1.id, datetime: date, temperature: null, humidity: null, rssi: -65 });
+		await db('history').insert({ tag_id: tagNull1.id, datetime: date, temperature: 21.5, humidity: 45.0, rssi: null });
+		await db('history').insert({ tag_id: tagNull2.id, datetime: date, temperature: null, humidity: null, rssi: null });
+
+		await aggregatedHistoryService.aggregateHistory(date);
+
+		const rawAggregated2 = await db('history_aggregated').select('*');
+
+		// tagNull1 should have aggregated values based on non-NULL inputs
+		assert.ok(rawAggregated2.some(a => a.tag_id === tagNull1.id && a.temperature_min === 21.5 && a.temperature_max === 21.5 && a.rssi_min === -65 && a.rssi_max === -65 && a.humidity_min === 45 && a.humidity_max === 45));
+
+		// tagNull2 should be filtered out because all sensors are NULL
+		assert.ok(!rawAggregated2.some(a => a.tag_id === tagNull2.id));
+	});
+
 	await t.test('saveAggregatedHistory - saves aggregated history', async () => {
 		const tag = await tagService.ensureTag({ ruuvi_id: '11:22:33:44:55:66' });
 		const now = new Date();

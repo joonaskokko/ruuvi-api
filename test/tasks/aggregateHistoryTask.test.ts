@@ -126,6 +126,19 @@ test('Aggregate History Task', async (t) => {
 		assert.strictEqual(result, true);
 	});
 
+	await t.test('run - logs "No days to aggregate." when no days to aggregate', async () => {
+		const logs: string[] = [];
+		const origLog = console.log;
+		console.log = (...args: any[]) => logs.push(args.join(' '));
+		try {
+			const result = await aggregateHistoryTask.run();
+			assert.strictEqual(result, true);
+			assert.ok(logs.some(l => l.includes('No days to aggregate.')));
+		} finally {
+			console.log = origLog;
+		}
+	});
+
 	await t.test('run - only aggregates complete days (before today)', async () => {
 		const tag = await tagService.ensureTag({ ruuvi_id: '11:22:33:44:55:66' });
 		const now = new Date();

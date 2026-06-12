@@ -23,6 +23,11 @@ export async function run(): Promise<boolean> {
 		return dates;
 	}, []);
 
+	if (dates_with_data.length === 0) {
+		console.log("No days to aggregate.");
+		return true;
+	}
+
 	// Go through the dates and check if it has aggregation data or not.
 	// If not, aggregate it.
 	await Promise.all(dates_with_data.map(async date => {

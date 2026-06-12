@@ -8,6 +8,7 @@ export const SENSORS: string[] = [ 'temperature', 'humidity', 'rssi' ];
 export const UNREACHABLE_HOURS: number = Number(process.env.UNREACHABLE_HOURS);
 export const LOW_BATTERY_VOLTAGE: number = Number(process.env.LOW_BATTERY_VOLTAGE);
 export const CURRENT_HISTORY_MIN_MAX_HOURS: number = Number(process.env.CURRENT_HISTORY_MIN_MAX_HOURS);
+export const HISTORY_DAYS_TO_KEEP:number = 7;
 
 // Server settings.
 export const { SERVER_PORT, SERVER_SOCKET } = process.env;
