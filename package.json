@@ -23,7 +23,7 @@
 		"date-fns": "^4.4.0",
 		"dotenv-flow": "^4.1.0",
 		"esbuild": "^0.28.2",
-		"express": "^4.22.2",
+		"express": "^5.2.1",
 		"knex": "^3.3.0",
 		"mysql2": "^3.24.2",
 		"node-schedule": "^2.1.1"
