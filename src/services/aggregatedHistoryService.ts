@@ -86,18 +86,21 @@ export async function saveAggregatedHistory({ tag_id, date, temperature_min, tem
  * Get aggregated history by tag ID and date.
  */
 
-export async function getAggregatedHistory({ tag_id = null, date = null, limit = null } = {}): Promise<AggregatedHistory[]> {
+export async function getAggregatedHistory({ tag_id = null, date_start = null, date_end = null, limit = null } = {}): Promise<AggregatedHistory[]> {
+	if (!date_start && !date_end) throw new Error("Data range must contain start and end date time.");
+	if (date_start > date_end) throw new Error("Start date cannot be before end date.");
 	const aggregated_histories_rows: AggregatedHistoryRow[] = await db('history_aggregated')
 		.select([ 'history_aggregated.*', 'tag.name as tag_name' ])
 		.leftJoin('tag', 'tag.id', 'tag_id')
 		.modify(query => {
-			if (date) {
-				query.where('date', date );
+			if (date_start && date_end) {
+				query.whereBetween('date', [ date_start, date_end ])
 			}
 
 			if (tag_id) query.where('tag_id', tag_id);
 			if (limit) query.limit(limit);
 		})
+		.where('tag.active', true)
 		.orderBy('history_aggregated.date', 'DESC');
 
 	// Convert from row format to formatted response with Sensor objects.
