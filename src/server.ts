@@ -107,6 +107,17 @@ app.get('/history_aggregated', async (req: Request, res: Response, next: NextFun
 	}
 });
 
+
+// Default route.
+app.use((req: Request, res: Response, next: NextFunction) => {
+	res.status(404).json({
+		error: "Resouce not Found",
+		message: `Cannot ${req.method} ${req.originalUrl}`
+	});
+});
+
+
+// Error handler.
 app.use((err, req: Request, res: Response, next: NextFunction) => {
 	console.error(err);
 	res.status(500);
